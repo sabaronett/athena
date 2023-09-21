@@ -1,0 +1,55 @@
+<comment>
+problem     = Radiation crossing beams test
+reference   = Jiang (2021, ApJS, 253, 49), § 4.2
+configure   = --prob=beam -implicit_radiation -mpi -hdf5 -h5double --cxx=gcc --cflag="-march=znver2"
+
+<job>
+problem_id  = beam             # basename of output filenames
+
+<output1>
+file_type   = hdf5             # HDF5 data dump
+variable    = Er               # output variables
+dt          = 10               # time increment between outputs
+xdmf        = 0                # disable XDMF output (VisIt)
+
+<time>
+cfl_number  = 0.4              # The Courant, Friedrichs & Lewy No.
+nlim        = -1               # cycle limit
+tlim        = 10               # time limit
+ncycle_out  = 1                # interval for stdout summary info
+
+<mesh>
+nx1         = 64               # Number of zones in X1-direction
+x1min       = -0.5             # minimum value of X1
+x1max       = 0.5              # maximum value of X1
+ix1_bc      = periodic         # inner-X1 boundary flag
+ox1_bc      = periodic         # outer-X1 boundary flag
+
+nx2         = 256              # Number of zones in X2-directiondd
+x2min       = -2               # minimum value of X2
+x2max       = 2                # maximum value of X2
+ix2_bc      = user             # inner-X2 boundary flag
+ox2_bc      = outflow          # outer-X2 boundary flag
+
+nx3         = 1                # Number of zones in X3-direction
+x3min       = 0.0              # minimum value of X3
+x3max       = 1.0              # maximum value of X3
+ix3_bc      = periodic         # inner-X3 boundary flag
+ox3_bc      = periodic         # outer-X3 boundary flag
+
+<meshblock>
+nx1         = 32
+nx2         = 32
+nx3         = 1
+
+<hydro>
+gamma       = 1.6666666666667  # gamma = C_p/C_v = 1 + 2/DoF
+
+<radiation>
+nmu         = 1                # number of polar angles per octant
+prat        = 1.0              # $a_rT_0^4/P_0$
+crat        = 1.0              # $c/v_0$
+error_limit = 1.0e-3           # tolerance level of iteration
+
+<problem>
+ang         = 0                # beam angle index in octants I & II
