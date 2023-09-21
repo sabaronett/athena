@@ -127,34 +127,34 @@ void TwoBeams(MeshBlock *pmb, Coordinates *pco, NRRadiation *prad,
               AthenaArray<Real> &ir,
               Real time, Real dt,
               int is, int ie, int js, int je, int ks, int ke, int ngh) {
-  int nang=prad->nang;
-  int noct=prad->noct;
-  int nfreq=prad->nfreq;
-  int ang_oct=nang/noct;
+  int nang=prad->nang;                      // Total no. of angles per cell
+  int noct=prad->noct;                      // No. of octants per cell (4 in 2D)
+  int nfreq=prad->nfreq;                    // No. of frequency bins
+  int ang_oct=nang/noct;                    // No. of angles per octant
 
   for (int k=ks; k<=ke; ++k) {
     for (int j=1; j<=ngh; ++j) {
       for (int i=is; i<=ie; ++i) {
         Real const &x1 = pco->x1v(i);
         Real const &x2 = pco->x2v(js-j);
-        for (int ifr=0; ifr<nfreq; ++ifr) {
-          for (int l=0; l<noct; ++l) {
-            for (int n=0; n<ang_oct; ++n) {
+        for (int ifr=0; ifr<nfreq; ++ifr) { // Each frequency bin
+          for (int l=0; l<noct; ++l) {      // Each octant
+            for (int n=0; n<ang_oct; ++n) { // Each angle
               int n_ang=l*ang_oct + n;
 
               Real slope1=-prad->mu(1,k,js-j,i,0)/prad->mu(0,k,js-j,i,0);
               Real slope2=prad->mu(1,k,js-j,i,0)/prad->mu(0,k,js-j,i,0);
               Real dis1=std::abs(slope1*(x1-0.1)+(x2+2.0));
               Real dis2=std::abs(slope2*(x1+0.1)+(x2+2.0));
-              if (ifr == 0) {
-                if (((l==0)&&(n==0)&&(dis1<pco->dx1v(i))) ||
-                    ((l==1)&&(n==0)&&(dis2<pco->dx1v(i)))) {
+              if (ifr == 0) {                                  // 0th frequency bin
+                if (((l==0)&&(n==ang)&&(dis1<pco->dx1v(i))) || // `ang` in octant I
+                    ((l==1)&&(n==ang)&&(dis2<pco->dx1v(i)))) { // `ang` in octant II
                   ir(k,js-j,i,n_ang+ifr*nang) = 10.0;
                 } else {
                   ir(k,js-j,i,n_ang+ifr*nang) = 0.0;
                 }
-              } else {
-                if (((l==0)&&(n==1)&&(dis1<pco->dx1v(i))) ||
+              } else {                                         // nth frequency bin
+                if (((l==0)&&(n==1)&&(dis1<pco->dx1v(i))) ||   // Why n==1?
                     ((l==1)&&(n==1)&&(dis2<pco->dx1v(i)))) {
                   ir(k,js-j,i,n_ang+ifr*nang) = 10.0;
                 } else {
