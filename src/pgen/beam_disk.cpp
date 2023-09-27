@@ -63,9 +63,9 @@ void Mesh::InitUserMeshData(ParameterInput *pin) {
   if (adaptive)
     EnrollUserRefinementCondition(RefinementCondition);
 
-  EnrollUserBoundaryFunction(BoundaryFace::inner_x2, TwoBeamHydro);
+  EnrollUserBoundaryFunction(BoundaryFace::inner_x1, TwoBeamHydro);
   if (NR_RADIATION_ENABLED || IM_RADIATION_ENABLED)
-    EnrollUserRadBoundaryFunction(BoundaryFace::inner_x2, TwoBeams);
+    EnrollUserRadBoundaryFunction(BoundaryFace::inner_x1, TwoBeams);
 }
 
 void MeshBlock::InitUserMeshBlockData(ParameterInput *pin) {
