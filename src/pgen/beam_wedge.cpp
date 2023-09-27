@@ -45,9 +45,8 @@ static int octnum;
 int RefinementCondition(MeshBlock *pmb);
 
 //======================================================================================
-//! \file beam.cpp
-//  \brief Beam test, modified for a disk in spherical-polar coordinate, for the
-//         radiative transfer module
+//! \file beam_wedge.cpp
+//  \brief Beam test for the radiative transfer module, modified for a polar wedge
 //======================================================================================
 
 void TwoBeams(MeshBlock *pmb, Coordinates *pco, NRRadiation *prad,
@@ -123,9 +122,8 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin) {
 }
 
 void TwoBeams(MeshBlock *pmb, Coordinates *pco, NRRadiation *prad,
-              const AthenaArray<Real> &w, FaceField &b,
-              AthenaArray<Real> &ir, Real time, Real dt,
-              int is, int ie, int js, int je, int ks, int ke, int ngh) {
+              const AthenaArray<Real> &w, FaceField &b, AthenaArray<Real> &ir, Real time,
+              Real dt, int is, int ie, int js, int je, int ks, int ke, int ngh) {
   int nang=prad->nang;                                             // Total angles
   int noct=prad->noct;                                             // octants (4 in 2D)
   int nfreq=prad->nfreq;                                           // frequency bins
