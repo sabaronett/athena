@@ -45,10 +45,10 @@ static int octnum;
 int RefinementCondition(MeshBlock *pmb);
 
 //======================================================================================
-/*! \file beam.cpp
- *  \brief Beam test for the radiative transfer module
- *
- *====================================================================================*/
+//! \file beam.cpp
+//  \brief Beam test, modified for a disk in spherical-polar coordinate, for the
+//         radiative transfer module
+//======================================================================================
 
 void TwoBeams(MeshBlock *pmb, Coordinates *pco, NRRadiation *prad,
               const AthenaArray<Real> &w, FaceField &b,
@@ -126,34 +126,34 @@ void TwoBeams(MeshBlock *pmb, Coordinates *pco, NRRadiation *prad,
               const AthenaArray<Real> &w, FaceField &b,
               AthenaArray<Real> &ir, Real time, Real dt,
               int is, int ie, int js, int je, int ks, int ke, int ngh) {
-  int nang=prad->nang;                      // Total no. of angles per cell
-  int noct=prad->noct;                      // No. of octants per cell (4 in 2D)
-  int nfreq=prad->nfreq;                    // No. of frequency bins
-  int ang_oct=nang/noct;                    // No. of angles per octant
+  int nang=prad->nang;                                             // Total angles
+  int noct=prad->noct;                                             // octants (4 in 2D)
+  int nfreq=prad->nfreq;                                           // frequency bins
+  int ang_oct=nang/noct;                                           // angles per octant
 
   for (int k=ks; k<=ke; ++k) {
     for (int j=1; j<=ngh; ++j) {
       for (int i=is; i<=ie; ++i) {
         Real const &x1 = pco->x1v(i);
         Real const &x2 = pco->x2v(js-j);
-        for (int ifr=0; ifr<nfreq; ++ifr) { // Each frequency bin
-          for (int l=0; l<noct; ++l) {      // Each octant
-            for (int n=0; n<ang_oct; ++n) { // Each angle
+        for (int ifr=0; ifr<nfreq; ++ifr) {                        // Each frequency bin
+          for (int l=0; l<noct; ++l) {                             // Each octant
+            for (int n=0; n<ang_oct; ++n) {                        // Each angle
               int n_ang=l*ang_oct + n;
 
               Real slope1=-prad->mu(1,k,js-j,i,0)/prad->mu(0,k,js-j,i,0);
               Real slope2=prad->mu(1,k,js-j,i,0)/prad->mu(0,k,js-j,i,0);
-              Real dis1=std::abs(slope1*(x2-0.1)+x1);
-              Real dis2=std::abs(slope2*(x2+0.1)+x1);
+              Real dis1=std::abs(slope1*(x2+0.78539816339744)+x1); // θ =  π/4
+              Real dis2=std::abs(slope2*(x2+2.35619449019234)+x1); // θ = 3π/4
 
-              if (ifr == 0) {                                  // 0th frequency bin
-                if (((l==0)&&(n==ang)&&(dis1<pco->dx2v(i))) || // 1st beam angle
-                    ((l==1)&&(n==ang)&&(dis2<pco->dx2v(i)))) { // 2nd beam angle
+              if (ifr == 0) {                                      // 0th frequency bin
+                if (((l==0)&&(n==ang)&&(dis1<pco->dx2v(i))) ||     // 1st beam angle
+                    ((l==1)&&(n==ang)&&(dis2<pco->dx2v(i)))) {     // 2nd beam angle
                   ir(k,js-j,i,n_ang+ifr*nang) = 10.0;
                 } else {
                   ir(k,js-j,i,n_ang+ifr*nang) = 0.0;
                 }
-              } else {                                         // nth frequency bin
+              } else {                                             // nth frequency bin
                 if (((l==0)&&(n==1)&&(dis1<pco->dx2v(i))) ||
                     ((l==1)&&(n==1)&&(dis2<pco->dx2v(i)))) {
                   ir(k,js-j,i,n_ang+ifr*nang) = 10.0;
