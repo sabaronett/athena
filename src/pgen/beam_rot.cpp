@@ -146,10 +146,10 @@ void TwoBeams(MeshBlock *pmb, Coordinates *pco, NRRadiation *prad,
             for (int n=0; n<ang_oct; ++n) { // nth octant angle
               int n_ang=l*ang_oct + n;
               // mu(0/1/2,...,ang_num) = cosx/y/z (get_moments/angulargrid.cpp)
-              Real slope1=-prad->mu(1,k,j,is-i,0)/prad->mu(0,k,j,is-i,0); 
-              Real slope2=prad->mu(1,k,j,is-i,0)/prad->mu(0,k,j,is-i,0);
-              Real dis1=std::abs((x1-x1min)+slope1*(x2-offset));
-              Real dis2=std::abs((x1-x1min)+slope2*(x2+offset));
+              // Real slope1=-prad->mu(1,k,j,is-i,0)/prad->mu(0,k,j,is-i,0); 
+              // Real slope2=prad->mu(1,k,j,is-i,0)/prad->mu(0,k,j,is-i,0);
+              Real dis1=std::abs((x1-x1min)+(x2-offset));
+              Real dis2=std::abs((x1-x1min)+(x2+offset));
               if (ifr == 0) {                                  // 0th frequency bin
                 if (((l==0)&&(n==ang)&&(dis1<pco->dx2v(j))) || // `ang` in octant I
                     ((l==3)&&(n==ang)&&(dis2<pco->dx2v(j)))) { // `ang` in octant IV
