@@ -41,12 +41,14 @@
 // File scope variables
 static int ang;
 static int octnum;
+static Real x1min;
+static Real offset;
 
 int RefinementCondition(MeshBlock *pmb);
 
 //======================================================================================
 /*! \file beam.cpp
- *  \brief Rotated (x1<->x2) beam test for the radiative transfer module
+ *  \brief Beam test for the radiative transfer module
  *
  *====================================================================================*/
 
@@ -71,6 +73,8 @@ void Mesh::InitUserMeshData(ParameterInput *pin) {
 void MeshBlock::InitUserMeshBlockData(ParameterInput *pin) {
   ang = pin->GetOrAddInteger("problem","ang",0);
   octnum = pin->GetOrAddInteger("problem","octnum",0);
+  x1min = pin->GetReal("mesh", "x1min");
+  offset = pin->GetReal("problem", "offset");
   return;
 }
 
@@ -127,25 +131,25 @@ void TwoBeams(MeshBlock *pmb, Coordinates *pco, NRRadiation *prad,
               AthenaArray<Real> &ir,
               Real time, Real dt,
               int is, int ie, int js, int je, int ks, int ke, int ngh) {
-  int nang=prad->nang;                      // total angles (Rad_angles.txt)
+  int nang=prad->nang;                      // total angles
   int noct=prad->noct;                      // octants (4 in 2D)
   int nfreq=prad->nfreq;                    // frequency bins
-  int ang_oct=nang/noct;                    // angles per octant (1 for nmu=1)
+  int ang_oct=nang/noct;                    // angles per octant
 
-  for (int k=ks; k<=ke; ++k) {              // k_start to k_end (along x3)
-    for (int j=js; j<=je; ++j) {            // j_start to j_end (along x2)
+  for (int k=ks; k<=ke; ++k) {              // along x3
+    for (int j=js; j<=je; ++j) {            // along x2
       for (int i=1; i<=ngh; ++i) {          // inner x1 boundary
-        Real const &x1 = pco->x1v(is-i);    // volume position within x1 boundary
-        Real const &x2 = pco->x2v(j);       // volume position along x2
-        for (int ifr=0; ifr<nfreq; ++ifr) { // frequency bin
-          for (int l=0; l<noct; ++l) {      // octant
-            for (int n=0; n<ang_oct; ++n) { // octant angle index
-              int n_ang=l*ang_oct + n;      // (n=0 always for nmu=1)
-              // prad->mu gives all angles (n-hat dot axis unit vector)
-              Real slope1=-prad->mu(1,k,j,is-i,0)/prad->mu(0,k,j,is-i,0);
+        Real const &x1 = pco->x1v(is-i);    // get inner x1 boundary vol pos
+        Real const &x2 = pco->x2v(j);       // get vol pos along x2
+        for (int ifr=0; ifr<nfreq; ++ifr) { // ith frequency bin
+          for (int l=0; l<noct; ++l) {      // lth octant
+            for (int n=0; n<ang_oct; ++n) { // nth octant angle
+              int n_ang=l*ang_oct + n;
+              // mu(0/1/2,...,ang_num) = cosx/y/z (get_moments/angulargrid.cpp)
+              Real slope1=-prad->mu(1,k,j,is-i,0)/prad->mu(0,k,j,is-i,0); 
               Real slope2=prad->mu(1,k,j,is-i,0)/prad->mu(0,k,j,is-i,0);
-              Real dis1=std::abs(slope1*(x2-0.1)+(x1+2.0));
-              Real dis2=std::abs(slope2*(x2+0.1)+(x1+2.0));
+              Real dis1=std::abs((x1-x1min)+slope1*(x2-offset));
+              Real dis2=std::abs((x1-x1min)+slope2*(x2+offset));
               if (ifr == 0) {                                  // 0th frequency bin
                 if (((l==0)&&(n==ang)&&(dis1<pco->dx2v(j))) || // `ang` in octant I
                     ((l==3)&&(n==ang)&&(dis2<pco->dx2v(j)))) { // `ang` in octant IV
@@ -154,7 +158,7 @@ void TwoBeams(MeshBlock *pmb, Coordinates *pco, NRRadiation *prad,
                   ir(k,j,is-i,n_ang+ifr*nang) = 0.0;
                 }
               } else {                                         // nth frequency bin
-                if (((l==0)&&(n==1)&&(dis1<pco->dx2v(j))) ||   // Why n==1?
+                if (((l==0)&&(n==1)&&(dis1<pco->dx2v(j))) ||
                     ((l==3)&&(n==1)&&(dis2<pco->dx2v(j)))) {
                   ir(k,j,is-i,n_ang+ifr*nang) = 10.0;
                 } else {
