@@ -149,23 +149,23 @@ void TwoBeams(MeshBlock *pmb, Coordinates *pco, NRRadiation *prad,
               // Real slope1=-prad->mu(1,k,j,is-i,0)/prad->mu(0,k,j,is-i,0); 
               // Real slope2=prad->mu(1,k,j,is-i,0)/prad->mu(0,k,j,is-i,0);
               Real dis1=std::abs((x1-x1min)+(x2-offset));
-              Real dis2=std::abs((x1-x1min)+(x2+offset));
+              // Real dis2=std::abs((x1-x1min)+(x2+offset));
               if (ifr == 0) {                                  // 0th frequency bin
-                if (((l==0)&&(n==ang)&&(dis1<pco->dx2v(j))) || // `ang` in octant I
-                    ((l==3)&&(n==ang)&&(dis2<pco->dx2v(j)))) { // `ang` in octant IV
+                if ((l==0)&&(n==ang)&&(dis1<pco->dx2v(j))) //|| // `ang` in octant I
+                    // ((l==3)&&(n==ang)&&(dis2<pco->dx2v(j)))) { // `ang` in octant IV
                   ir(k,j,is-i,n_ang+ifr*nang) = 10.0;
                 } else {
                   ir(k,j,is-i,n_ang+ifr*nang) = 0.0;
                 }
-              } else {                                         // nth frequency bin
-                if (((l==0)&&(n==1)&&(dis1<pco->dx2v(j))) ||
-                    ((l==3)&&(n==1)&&(dis2<pco->dx2v(j)))) {
-                  ir(k,j,is-i,n_ang+ifr*nang) = 10.0;
-                } else {
-                  ir(k,j,is-i,n_ang+ifr*nang) = 0.0;
-                }
-              }
-            }
+              } //else {                                         // nth frequency bin
+              //   if (((l==0)&&(n==1)&&(dis1<pco->dx2v(j))) ||
+              //       ((l==3)&&(n==1)&&(dis2<pco->dx2v(j)))) {
+              //     ir(k,j,is-i,n_ang+ifr*nang) = 10.0;
+              //   } else {
+              //     ir(k,j,is-i,n_ang+ifr*nang) = 0.0;
+              //   }
+              // }
+            // }
           }
         }
       }
