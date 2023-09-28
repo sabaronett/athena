@@ -151,7 +151,7 @@ void TwoBeams(MeshBlock *pmb, Coordinates *pco, NRRadiation *prad,
               Real dis1=std::abs(slope1*(x1-x1min)+(x2-offset));
               Real dis2=std::abs(slope2*(x1-x1min)+(x2+offset));
               if (ifr == 0) {                                  // 0th frequency bin
-                if ((l==0)&&(n==ang)&&(dis1<pco->dx2v(j))) || // `ang` in octant I
+                if (((l==0)&&(n==ang)&&(dis1<pco->dx2v(j))) || // `ang` in octant I
                     ((l==3)&&(n==ang)&&(dis2<pco->dx2v(j)))) { // `ang` in octant IV
                   ir(k,j,is-i,n_ang+ifr*nang) = 10.0;
                 } else {
