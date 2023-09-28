@@ -153,14 +153,14 @@ void TwoBeams(MeshBlock *pmb, Coordinates *pco, NRRadiation *prad,
               if (ifr == 0) {                                  // 0th frequency bin
                 if (((l==0)&&(n==ang)&&(dis1<pco->dx2v(j))) || // `ang` in octant I
                     ((l==3)&&(n==ang)&&(dis2<pco->dx2v(j)))) { // `ang` in octant IV
-                  ir(k,j,is-i,n_ang+ifr*nang) = 0.0;
+                  ir(k,j,is-i,n_ang+ifr*nang) = 10.0;
                 } else {
                   ir(k,j,is-i,n_ang+ifr*nang) = 0.0;
                 }
               } else {                                         // nth frequency bin
                 if (((l==0)&&(n==1)&&(dis1<pco->dx2v(j))) ||
                     ((l==3)&&(n==1)&&(dis2<pco->dx2v(j)))) {
-                  ir(k,j,is-i,n_ang+ifr*nang) = 0.0;
+                  ir(k,j,is-i,n_ang+ifr*nang) = 10.0;
                 } else {
                   ir(k,j,is-i,n_ang+ifr*nang) = 0.0;
                 }
