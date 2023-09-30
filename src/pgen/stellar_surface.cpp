@@ -142,10 +142,10 @@ void TwoBeamHydro(
     Real time, Real dt, int is, int ie, int js, int je, int ks, int ke, int ngh) {
   for (int n=0; n<NHYDRO; ++n) {
     for (int k=ks; k<=ke; ++k) {
-      for (int j=1; j<=ngh; ++j) {
+      for (int j=js; j<=je; ++j) {
 #pragma omp simd
-        for (int i=is; i<=ie; ++i) {
-          prim(n,k,js-j,i) = prim(n,k,js,i);
+        for (int i=1; i<=ngh; ++i) {
+          prim(n,k,j,is-i) = prim(n,k,j,is);
         }
       }
     }
