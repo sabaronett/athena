@@ -67,7 +67,7 @@ void Mesh::InitUserMeshData(ParameterInput *pin) {
 }
 
 void MeshBlock::InitUserMeshBlockData(ParameterInput *pin) {
-  theta = pin->GetOrAddReal("problem", "theta", 0);
+  theta = pin->GetOrAddReal("problem", "theta", 0.0);
   return;
 }
 
@@ -129,10 +129,11 @@ void TwoBeams(MeshBlock *pmb, Coordinates *pco, NRRadiation *prad,
       for (int i=1; i<=ngh; ++i) {
         for (int n=0; n<nang; ++n) {
           if (prad->mu(0,k,j,is-i,n) > 0) {
-            if (theta != 0) {
+            if (theta > 0.0) {
               Real const &x2 = pco->x2v(j);
+              Real dis = std::abs(x2 - theta);
               
-              if ((x2 - theta) < pco->dx2v(j)) {
+              if (dis < pco->dx2v(j)) {
                 ir(k,j,is-i,n) = 10.0;
               }
               else {
