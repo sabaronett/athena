@@ -38,6 +38,9 @@
 #include "../nr_radiation/radiation.hpp"
 #include "../parameter_input.hpp"
 
+// File scope variables
+static Real theta;
+
 int RefinementCondition(MeshBlock *pmb);
 
 //======================================================================================
@@ -64,13 +67,14 @@ void Mesh::InitUserMeshData(ParameterInput *pin) {
 }
 
 void MeshBlock::InitUserMeshBlockData(ParameterInput *pin) {
+  theta = pin->GetOrAddReal("problem", "theta", 0);
   return;
 }
 
 
 //======================================================================================
 //! \fn void MeshBlock::ProblemGenerator(ParameterInput *pin)
-//  \brief beam test
+//  \brief stellar surface test
 //======================================================================================
 void MeshBlock::ProblemGenerator(ParameterInput *pin) {
   Real gamma = peos->GetGamma();
@@ -125,7 +129,19 @@ void TwoBeams(MeshBlock *pmb, Coordinates *pco, NRRadiation *prad,
       for (int i=1; i<=ngh; ++i) {
         for (int n=0; n<nang; ++n) {
           if (prad->mu(0,k,j,is-i,n) > 0) {
-            ir(k,j,is-i,n) = 10.0;
+            if (theta != 0) {
+              Real const &x2 = pco->x2v(j);
+              
+              if ((x2 - theta) < pco->dx2v(j)) {
+                ir(k,j,is-i,n) = 10.0;
+              }
+              else {
+                ir(k,j,is-i,n) = 0.0;
+              }
+            }
+            else {
+              ir(k,j,is-i,n) = 10.0;
+            }
           }
           else {
             ir(k,j,is-i,n) = 0.0;
