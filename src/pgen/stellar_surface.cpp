@@ -124,9 +124,8 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin) {
 void TwoBeams(MeshBlock *pmb, Coordinates *pco, NRRadiation *prad,
               const AthenaArray<Real> &w, FaceField &b, AthenaArray<Real> &ir, Real time,
               Real dt, int is, int ie, int js, int je, int ks, int ke, int ngh) {
-  int nang = prad->nang;                    // total n-hat angles
-  int nbeam = 0;                            // angle most parallel to radial (x1) axis
-  Real cosx_hi = 0.0;                       // highest cosx(n)
+  int nang = prad->nang;               // total n-hat angles N
+  Real max_mu_x = prad->mu(0,0,0,0,0); // max(\mu_x)
 
   for (int k=ks; k<=ke; ++k) {
     for (int j=js; j<=je; ++j) {
@@ -134,35 +133,29 @@ void TwoBeams(MeshBlock *pmb, Coordinates *pco, NRRadiation *prad,
         for (int n=0; n<nang; ++n) {
           ir(k,j,is-i,n) = 0.0;
 
-          if (radial == 1) {
-            if (prad->mu(0,k,j,is-i,n) > cosx_hi) {
-              cosx_hi = prad->mu(0,k,j,is-i,n);
-              nbeam = n;
+          if (radial == 1 && prad->mu(0,k,j,is-i,n) == max_mu_x) { // radial emission only
+            if (theta > 0.0) {
+              Real const &x2 = pco->x2v(j);
+              Real dis = std::abs(x2 - theta);
+              
+              if (dis < pco->dx2v(j)) ir(k,j,is-i,n) = 10.0;
+            }
+            else {
+              ir(k,j,is-i,n) = 10.0;
             }
           }
-          else {
-            if (prad->mu(0,k,j,is-i,n) > 0) {
-              if (theta > 0.0) {
-                Real const &x2 = pco->x2v(j);
-                Real dis = std::abs(x2 - theta);
-                
-                if (dis < pco->dx2v(j)) ir(k,j,is-i,n) = 10.0;
-              }
-              else {
+          else { // isotropic surface emission
+            if (theta > 0.0) {
+              Real const &x2 = pco->x2v(j);
+              Real dis = std::abs(x2 - theta);
+              
+              if (dis < pco->dx2v(j) && prad->mu(0,k,j,is-i,n) > 0) {
                 ir(k,j,is-i,n) = 10.0;
               }
             }
-          }
-        }
-        if (radial == 1) {
-          if (theta > 0.0) {
-            Real const &x2 = pco->x2v(j);
-            Real dis = std::abs(x2 - theta);
-            
-            if (dis < pco->dx2v(j)) ir(k,j,is-i,nbeam) = 10.0;
-          }
-          else {
-            ir(k,j,is-i,nbeam) = 10.0;
+            else {
+              if (prad->mu(0,k,j,is-i,n) > 0) ir(k,j,is-i,n) = 10.0;
+            }
           }
         }
       }
