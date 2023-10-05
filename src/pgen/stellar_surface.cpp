@@ -124,8 +124,12 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin) {
 void TwoBeams(MeshBlock *pmb, Coordinates *pco, NRRadiation *prad,
               const AthenaArray<Real> &w, FaceField &b, AthenaArray<Real> &ir, Real time,
               Real dt, int is, int ie, int js, int je, int ks, int ke, int ngh) {
-  int nang = prad->nang;               // total n-hat angles N
-  Real max_mu_x = prad->mu(0,0,0,0,0); // max(\mu_x)
+  int nang = prad->nang;       // total n-hat angles N
+  Real max_mu_x = 0;           // max(\mu_x)
+  
+  for (int n=0; n<nang; ++n) { // find independent of Rad_angles.txt order
+    if (prad->mu(0,0,0,0,n) > max_mu_x) max_mu_x = prad->mu(0,0,0,0,n);
+  }
 
   for (int k=ks; k<=ke; ++k) {
     for (int j=js; j<=je; ++j) {
@@ -144,7 +148,7 @@ void TwoBeams(MeshBlock *pmb, Coordinates *pco, NRRadiation *prad,
               ir(k,j,is-i,n) = 10.0;
             }
           }
-          else { // isotropic surface emission
+          else {               // isotropic surface emission
             if (theta > 0.0) {
               Real const &x2 = pco->x2v(j);
               Real dis = std::abs(x2 - theta);
