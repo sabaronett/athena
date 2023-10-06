@@ -126,9 +126,15 @@ void TwoBeams(MeshBlock *pmb, Coordinates *pco, NRRadiation *prad,
               Real dt, int is, int ie, int js, int je, int ks, int ke, int ngh) {
   int nang = prad->nang;       // total n-hat angles N
   Real max_mu_x = 0;           // max(\mu_x)
+  int nact = 0;                // active angles
   
-  for (int n=0; n<nang; ++n) { // find independent of Rad_angles.txt order
-    if (prad->mu(0,0,0,0,n) > max_mu_x) max_mu_x = prad->mu(0,0,0,0,n);
+  if (radial == 1) {
+    for (int n=0; n<nang; ++n) { // find independent of Rad_angles.txt order
+      if (prad->mu(0,0,0,0,n) > max_mu_x) max_mu_x = prad->mu(0,0,0,0,n);
+    }
+    for (int n=0; n<nang; ++n) { // count active angles
+      if (prad->mu(0,0,0,0,n) == max_mu_x) ++nact;
+    }
   }
 
   for (int k=ks; k<=ke; ++k) {
@@ -138,27 +144,31 @@ void TwoBeams(MeshBlock *pmb, Coordinates *pco, NRRadiation *prad,
           ir(k,j,is-i,n) = 0.0;
 
           if (radial == 1 && prad->mu(0,k,j,is-i,n) == max_mu_x) { // radial emission only
+            Real ir_adj = 1/(prad->wmu(n)*nact);
+            
             if (theta > 0.0) {
               Real const &x2 = pco->x2v(j);
               Real dis = std::abs(x2 - theta);
               
-              if (dis < pco->dx2v(j)) ir(k,j,is-i,n) = 10.0;
+              if (dis < pco->dx2v(j)) ir(k,j,is-i,n) = ir_adj;
             }
             else {
-              ir(k,j,is-i,n) = 10.0;
+              ir(k,j,is-i,n) = ir_adj;
             }
           }
-          else {               // isotropic surface emission
+          else {                                             // isotropic surface emission
+            Real ir_adj = 1/(prad->wmu(n)*nang/2);
+
             if (theta > 0.0) {
               Real const &x2 = pco->x2v(j);
               Real dis = std::abs(x2 - theta);
               
               if (dis < pco->dx2v(j) && prad->mu(0,k,j,is-i,n) > 0) {
-                ir(k,j,is-i,n) = 10.0;
+                ir(k,j,is-i,n) = ir_adj;
               }
             }
             else {
-              if (prad->mu(0,k,j,is-i,n) > 0) ir(k,j,is-i,n) = 10.0;
+              if (prad->mu(0,k,j,is-i,n) > 0) ir(k,j,is-i,n) = ir_adj;
             }
           }
         }
