@@ -275,10 +275,10 @@ void RadInnerX1(MeshBlock *pmb, Coordinates *pco, NRRadiation *prad,
         for (int n=0; n<nang; ++n) {
           ir_adj = 1/(prad->wmu(n)*nact);
 
-          if (prad->mu(0,k,j,il-i,n) == mu_xmax) {
-            ir(k,j,il-i,n) = ir_adj;
+          if (prad->mu(0,k,j,is-i,n) == mu_xmax) {
+            ir(k,j,is-i,n) = ir_adj;
           } else {
-            ir(k,j,il-i,n) = 0.0;
+            ir(k,j,is-i,n) = 0.0;
           }
         }
       }
