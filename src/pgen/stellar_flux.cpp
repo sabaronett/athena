@@ -50,8 +50,12 @@ Real sigma_a;
 } // namespace
 
 // User-defined boundary conditions for disk simulations
+void RadInnerX1(MeshBlock *pmb, Coordinates *pco, const AthenaArray<Real> &w,
+                FaceField &b, NRRadiation *prad, AthenaArray<Real> &ir,
+                Real time, Real dt,
+                int is, int ie, int js, int je, int ks, int ke, int ngh);
 void DiskInnerX1(MeshBlock *pmb, Coordinates *pco, AthenaArray<Real> &prim,FaceField &b,
-                 Real time, Real dt, NRRadiation *prad, AthenaArray<Real> &ir,
+                 Real time, Real dt,
                  int il, int iu, int jl, int ju, int kl, int ku, int ngh);
 void DiskOuterX1(MeshBlock *pmb, Coordinates *pco, AthenaArray<Real> &prim,FaceField &b,
                  Real time, Real dt,
@@ -104,6 +108,10 @@ void Mesh::InitUserMeshData(ParameterInput *pin) {
   // enroll user-defined boundary condition
   if (mesh_bcs[BoundaryFace::inner_x1] == GetBoundaryFlag("user")) {
     EnrollUserBoundaryFunction(BoundaryFace::inner_x1, DiskInnerX1);
+
+    if (NR_RADIATION_ENABLED || IM_RADIATION_ENABLED) {
+      EnrollUserRadBoundaryFunction(BoundaryFace::inner_x1, RadInnerX1Rad);
+    }
   }
   if (mesh_bcs[BoundaryFace::outer_x1] == GetBoundaryFlag("user")) {
     EnrollUserBoundaryFunction(BoundaryFace::outer_x1, DiskOuterX1);
@@ -245,16 +253,14 @@ Real VelProfileCyl(const Real rad, const Real phi, const Real z) {
 //----------------------------------------------------------------------------------------
 //! User-defined boundary Conditions: sets solution in ghost zones to initial values
 
-void DiskInnerX1(MeshBlock *pmb,Coordinates *pco, AthenaArray<Real> &prim, FaceField &b,
-                 Real time, Real dt, NRRadiation *prad, AthenaArray<Real> &ir,
-                 int il, int iu, int jl, int ju, int kl, int ku, int ngh) {
-  Real rad(0.0), phi(0.0), z(0.0);
-  Real vel;
-  OrbitalVelocityFunc &vK = pmb->porb->OrbitalVelocity;
+void RadInnerX1(MeshBlock *pmb, Coordinates *pco, const AthenaArray<Real> &w,
+                FaceField &b, NRRadiation *prad, AthenaArray<Real> &ir,
+                Real time, Real dt,
+                int is, int ie, int js, int je, int ks, int ke, int ngh) {
   int nang = prad->nang;       // total n-hat angles N
+  int nact = 0;                // active angles
   Real mu_xmax = 0;            // max(\mu_x)
   Real ir_adj = 0;             // adjust intensity (sums to 1)
-  int nact = 0;                // active angles
 
   for (int n=0; n<nang; ++n) { // find independent of Rad_angles.txt order
     if (prad->mu(0,0,0,0,n) > mu_xmax) mu_xmax = prad->mu(0,0,0,0,n);
@@ -263,6 +269,32 @@ void DiskInnerX1(MeshBlock *pmb,Coordinates *pco, AthenaArray<Real> &prim, FaceF
     if (prad->mu(0,0,0,0,n) == mu_xmax) ++nact;
   }
 
+  for (int k=ks; k<=ke; ++k) {
+    for (int j=js; j<=je; ++j) {
+      for (int i=1; i<=ngh; ++i) {
+        for (int n=0; n<nang; ++n) {
+          ir_adj = 1/(prad->wmu(n)*nact);
+
+          if (prad->mu(0,k,j,il-i,n) == mu_xmax) {
+            ir(k,j,il-i,n) = ir_adj;
+          } else {
+            ir(k,j,il-i,n) = 0.0;
+          }
+        }
+      }
+    }
+  }
+}
+
+//----------------------------------------------------------------------------------------
+//! User-defined boundary Conditions: sets solution in ghost zones to initial values
+
+void DiskInnerX1(MeshBlock *pmb,Coordinates *pco, AthenaArray<Real> &prim, FaceField &b,
+                 Real time, Real dt,
+                 int il, int iu, int jl, int ju, int kl, int ku, int ngh) {
+  Real rad(0.0), phi(0.0), z(0.0);
+  Real vel;
+  OrbitalVelocityFunc &vK = pmb->porb->OrbitalVelocity;
   if (std::strcmp(COORDINATE_SYSTEM, "cylindrical") == 0) {
     for (int k=kl; k<=ku; ++k) {
       for (int j=jl; j<=ju; ++j) {
@@ -294,16 +326,6 @@ void DiskInnerX1(MeshBlock *pmb,Coordinates *pco, AthenaArray<Real> &prim, FaceF
           prim(IM3,k,j,il-i) = vel;
           if (NON_BAROTROPIC_EOS)
             prim(IEN,k,j,il-i) = PoverR(rad, phi, z)*prim(IDN,k,j,il-i);
-          
-          for (int n=0; n<nang; ++n) {
-            ir_adj = 1/(prad->wmu(n)*nact);
-
-            if (prad->mu(0,k,j,il-i,n) == mu_xmax) {
-              ir(k,j,il-i,n) = ir_adj;
-            } else {
-              ir(k,j,il-i,n) = 0.0;
-            }
-          }
         }
       }
     }
