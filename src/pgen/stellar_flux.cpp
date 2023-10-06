@@ -50,8 +50,8 @@ Real sigma_a;
 } // namespace
 
 // User-defined boundary conditions for disk simulations
-void RadInnerX1(MeshBlock *pmb, Coordinates *pco, const AthenaArray<Real> &w,
-                FaceField &b, NRRadiation *prad, AthenaArray<Real> &ir,
+void RadInnerX1(MeshBlock *pmb, Coordinates *pco, NRRadiation *prad,
+                const AthenaArray<Real> &w, FaceField &b, AthenaArray<Real> &ir,
                 Real time, Real dt,
                 int is, int ie, int js, int je, int ks, int ke, int ngh);
 void DiskInnerX1(MeshBlock *pmb, Coordinates *pco, AthenaArray<Real> &prim,FaceField &b,
@@ -110,7 +110,7 @@ void Mesh::InitUserMeshData(ParameterInput *pin) {
     EnrollUserBoundaryFunction(BoundaryFace::inner_x1, DiskInnerX1);
 
     if (NR_RADIATION_ENABLED || IM_RADIATION_ENABLED) {
-      EnrollUserRadBoundaryFunction(BoundaryFace::inner_x1, RadInnerX1Rad);
+      EnrollUserRadBoundaryFunction(BoundaryFace::inner_x1, RadInnerX1);
     }
   }
   if (mesh_bcs[BoundaryFace::outer_x1] == GetBoundaryFlag("user")) {
@@ -253,10 +253,10 @@ Real VelProfileCyl(const Real rad, const Real phi, const Real z) {
 //----------------------------------------------------------------------------------------
 //! User-defined boundary Conditions: sets solution in ghost zones to initial values
 
-void RadInnerX1(MeshBlock *pmb, Coordinates *pco, const AthenaArray<Real> &w,
-                FaceField &b, NRRadiation *prad, AthenaArray<Real> &ir,
-                Real time, Real dt,
-                int is, int ie, int js, int je, int ks, int ke, int ngh) {
+void RadInnerX1(MeshBlock *pmb, Coordinates *pco, NRRadiation *prad,
+              const AthenaArray<Real> &w, FaceField &b, AthenaArray<Real> &ir,
+              Real time, Real dt,
+              int is, int ie, int js, int je, int ks, int ke, int ngh) {
   int nang = prad->nang;       // total n-hat angles N
   int nact = 0;                // active angles
   Real mu_xmax = 0;            // max(\mu_x)
