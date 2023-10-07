@@ -115,18 +115,38 @@ void Mesh::InitUserMeshData(ParameterInput *pin) {
   }
   if (mesh_bcs[BoundaryFace::outer_x1] == GetBoundaryFlag("user")) {
     EnrollUserBoundaryFunction(BoundaryFace::outer_x1, DiskOuterX1);
+    
+    if (NR_RADIATION_ENABLED || IM_RADIATION_ENABLED) {
+      EnrollUserRadBoundaryFunction(BoundaryFace::outer_x1, RadOuterX1);
+    }
   }
   if (mesh_bcs[BoundaryFace::inner_x2] == GetBoundaryFlag("user")) {
     EnrollUserBoundaryFunction(BoundaryFace::inner_x2, DiskInnerX2);
+    
+    if (NR_RADIATION_ENABLED || IM_RADIATION_ENABLED) {
+      EnrollUserRadBoundaryFunction(BoundaryFace::inner_x2, RadInnerX2);
+    }
   }
   if (mesh_bcs[BoundaryFace::outer_x2] == GetBoundaryFlag("user")) {
     EnrollUserBoundaryFunction(BoundaryFace::outer_x2, DiskOuterX2);
+    
+    if (NR_RADIATION_ENABLED || IM_RADIATION_ENABLED) {
+      EnrollUserRadBoundaryFunction(BoundaryFace::outer_x2, RadOuterX2);
+    }
   }
   if (mesh_bcs[BoundaryFace::inner_x3] == GetBoundaryFlag("user")) {
     EnrollUserBoundaryFunction(BoundaryFace::inner_x3, DiskInnerX3);
+    
+    if (NR_RADIATION_ENABLED || IM_RADIATION_ENABLED) {
+      EnrollUserRadBoundaryFunction(BoundaryFace::inner_x3, RadInnerX3);
+    }
   }
   if (mesh_bcs[BoundaryFace::outer_x3] == GetBoundaryFlag("user")) {
     EnrollUserBoundaryFunction(BoundaryFace::outer_x3, DiskOuterX3);
+    
+    if (NR_RADIATION_ENABLED || IM_RADIATION_ENABLED) {
+      EnrollUserRadBoundaryFunction(BoundaryFace::outer_x3, RadOuterX3);
+    }
   }
 
   return;
@@ -254,9 +274,9 @@ Real VelProfileCyl(const Real rad, const Real phi, const Real z) {
 //! User-defined boundary Conditions: sets solution in ghost zones to initial values
 
 void RadInnerX1(MeshBlock *pmb, Coordinates *pco, NRRadiation *prad,
-              const AthenaArray<Real> &w, FaceField &b, AthenaArray<Real> &ir,
-              Real time, Real dt,
-              int is, int ie, int js, int je, int ks, int ke, int ngh) {
+                const AthenaArray<Real> &w, FaceField &b, AthenaArray<Real> &ir,
+                Real time, Real dt,
+                int is, int ie, int js, int je, int ks, int ke, int ngh) {
   int nang = prad->nang;       // total n-hat angles N
   int nact = 0;                // active angles
   Real mu_xmax = 0;            // max(\mu_x)
@@ -280,6 +300,106 @@ void RadInnerX1(MeshBlock *pmb, Coordinates *pco, NRRadiation *prad,
           } else {
             ir(k,j,is-i,n) = 0.0;
           }
+        }
+      }
+    }
+  }
+}
+
+//----------------------------------------------------------------------------------------
+//! User-defined boundary Conditions: sets solution in ghost zones to initial values
+
+void RadOuterX1(MeshBlock *pmb, Coordinates *pco, NRRadiation *prad,
+                const AthenaArray<Real> &w, FaceField &b, AthenaArray<Real> &ir,
+                Real time, Real dt,
+                int is, int ie, int js, int je, int ks, int ke, int ngh) {
+  int nang = prad->nang;       // total n-hat angles N
+
+  for (int k=ks; k<=ke; ++k) {
+    for (int j=js; j<=je; ++j) {
+      for (int i=1; i<=ngh; ++i) {
+        for (int n=0; n<nang; ++n) {
+          ir(k,j,ie+i,n) = 0.0;
+        }
+      }
+    }
+  }
+}
+
+//----------------------------------------------------------------------------------------
+//! User-defined boundary Conditions: sets solution in ghost zones to initial values
+
+void RadInnerX2(MeshBlock *pmb, Coordinates *pco, NRRadiation *prad,
+                const AthenaArray<Real> &w, FaceField &b, AthenaArray<Real> &ir,
+                Real time, Real dt,
+                int is, int ie, int js, int je, int ks, int ke, int ngh) {
+  int nang = prad->nang;       // total n-hat angles N
+
+  for (int k=ks; k<=ke; ++k) {
+    for (int j=1; j<=ngh; ++j) {
+      for (int i=is; i<=ie; ++i) {
+        for (int n=0; n<nang; ++n) {
+          ir(k,js-j,i,n) = 0.0;
+        }
+      }
+    }
+  }
+}
+
+//----------------------------------------------------------------------------------------
+//! User-defined boundary Conditions: sets solution in ghost zones to initial values
+
+void RadOuterX2(MeshBlock *pmb, Coordinates *pco, NRRadiation *prad,
+                const AthenaArray<Real> &w, FaceField &b, AthenaArray<Real> &ir,
+                Real time, Real dt,
+                int is, int ie, int js, int je, int ks, int ke, int ngh) {
+  int nang = prad->nang;       // total n-hat angles N
+
+  for (int k=ks; k<=ke; ++k) {
+    for (int j=1; j<=ngh; ++j) {
+      for (int i=is; i<=ie; ++i) {
+        for (int n=0; n<nang; ++n) {
+          ir(k,je+j,i,n) = 0.0;
+        }
+      }
+    }
+  }
+}
+
+//----------------------------------------------------------------------------------------
+//! User-defined boundary Conditions: sets solution in ghost zones to initial values
+
+void RadInnerX3(MeshBlock *pmb, Coordinates *pco, NRRadiation *prad,
+                const AthenaArray<Real> &w, FaceField &b, AthenaArray<Real> &ir,
+                Real time, Real dt,
+                int is, int ie, int js, int je, int ks, int ke, int ngh) {
+  int nang = prad->nang;       // total n-hat angles N
+
+  for (int k=1; k<=ngh; ++k) {
+    for (int j=js; j<=je; ++j) {
+      for (int i=is; i<=ie; ++i) {
+        for (int n=0; n<nang; ++n) {
+          ir(ks-k,j,i,n) = 0.0;
+        }
+      }
+    }
+  }
+}
+
+//----------------------------------------------------------------------------------------
+//! User-defined boundary Conditions: sets solution in ghost zones to initial values
+
+void RadOuterX3(MeshBlock *pmb, Coordinates *pco, NRRadiation *prad,
+                const AthenaArray<Real> &w, FaceField &b, AthenaArray<Real> &ir,
+                Real time, Real dt,
+                int is, int ie, int js, int je, int ks, int ke, int ngh) {
+  int nang = prad->nang;       // total n-hat angles N
+
+  for (int k=1; k<=ngh; ++k) {
+    for (int j=js; j<=je; ++j) {
+      for (int i=is; i<=ie; ++i) {
+        for (int n=0; n<nang; ++n) {
+          ir(ke+k,j,i,n) = 0.0;
         }
       }
     }
