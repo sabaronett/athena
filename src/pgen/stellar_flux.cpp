@@ -54,6 +54,26 @@ void RadInnerX1(MeshBlock *pmb, Coordinates *pco, NRRadiation *prad,
                 const AthenaArray<Real> &w, FaceField &b, AthenaArray<Real> &ir,
                 Real time, Real dt,
                 int is, int ie, int js, int je, int ks, int ke, int ngh);
+void RadOuterX1(MeshBlock *pmb, Coordinates *pco, NRRadiation *prad,
+                const AthenaArray<Real> &w, FaceField &b, AthenaArray<Real> &ir,
+                Real time, Real dt,
+                int is, int ie, int js, int je, int ks, int ke, int ngh);
+void RadInnerX2(MeshBlock *pmb, Coordinates *pco, NRRadiation *prad,
+                const AthenaArray<Real> &w, FaceField &b, AthenaArray<Real> &ir,
+                Real time, Real dt,
+                int is, int ie, int js, int je, int ks, int ke, int ngh);
+void RadOuterX2(MeshBlock *pmb, Coordinates *pco, NRRadiation *prad,
+                const AthenaArray<Real> &w, FaceField &b, AthenaArray<Real> &ir,
+                Real time, Real dt,
+                int is, int ie, int js, int je, int ks, int ke, int ngh);
+void RadInnerX3(MeshBlock *pmb, Coordinates *pco, NRRadiation *prad,
+                const AthenaArray<Real> &w, FaceField &b, AthenaArray<Real> &ir,
+                Real time, Real dt,
+                int is, int ie, int js, int je, int ks, int ke, int ngh);
+void RadOuterX3(MeshBlock *pmb, Coordinates *pco, NRRadiation *prad,
+                const AthenaArray<Real> &w, FaceField &b, AthenaArray<Real> &ir,
+                Real time, Real dt,
+                int is, int ie, int js, int je, int ks, int ke, int ngh);
 void DiskInnerX1(MeshBlock *pmb, Coordinates *pco, AthenaArray<Real> &prim,FaceField &b,
                  Real time, Real dt,
                  int il, int iu, int jl, int ju, int kl, int ku, int ngh);
