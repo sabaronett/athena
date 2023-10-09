@@ -46,8 +46,12 @@ Real VelProfileCyl(const Real rad, const Real phi, const Real z);
 Real gm0, r0, rho0, dslope, p0_over_r0, pslope, gamma_gas;
 Real dfloor;
 Real Omega0;
-Real sigma_a;
+Real kappa_a;
 } // namespace
+
+// User-defined opacity function for radiation simulations
+// void Diffusion(MeshBlock *pmb, AthenaArray<Real> &u_cr,
+//                AthenaArray<Real> &prim, AthenaArray<Real> &bcc);
 
 // User-defined boundary conditions for disk simulations
 void RadInnerX1(MeshBlock *pmb, Coordinates *pco, NRRadiation *prad,
@@ -123,7 +127,12 @@ void Mesh::InitUserMeshData(ParameterInput *pin) {
   Omega0 = pin->GetOrAddReal("orbital_advection","Omega0",0.0);
 
   // Get parameters for radiation
-  sigma_a = pin->GetOrAddReal("problem", "sigma_a", 0.0);
+  kappa_a = pin->GetOrAddReal("problem", "kappa_a", 0.0);
+
+  // enroll user-defined opacity function
+  // if (NR_RADIATION_ENABLED || IM_RADIATION_ENABLED) {
+  //   EnrollOpacityFunction(Diffusion);
+  // }
 
   // enroll user-defined boundary condition
   if (mesh_bcs[BoundaryFace::inner_x1] == GetBoundaryFlag("user")) {
@@ -224,10 +233,10 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin) {
       for (int j=js; j<=je; ++j) {
         for (int i=is; i<=ie; ++i) {
           for (int ifr=0; ifr < nfreq; ++ifr) {
-            pnrrad->sigma_s(k,j,i,ifr) = 0.0;
-            pnrrad->sigma_a(k,j,i,ifr) = sigma_a;
-            pnrrad->sigma_pe(k,j,i,ifr) = 0.0;
-            pnrrad->sigma_p(k,j,i,ifr) = 0.0;
+            pnrrad->sigma_s(k,j,i,ifr) = 0.0;  // scattering opacity
+            pnrrad->sigma_a(k,j,i,ifr) = phydro->u(IDN,k,j,i)*kappa_a;
+            pnrrad->sigma_pe(k,j,i,ifr) = 0.0; // absorption Planck mean before E
+            pnrrad->sigma_p(k,j,i,ifr) = 0.0;  // absorption Planck mean before aT^4
           }
           for (int n=0; n<pnrrad->n_fre_ang; ++n) {
               pnrrad->ir(k,j,i,n) = 0.0;
@@ -289,6 +298,80 @@ Real VelProfileCyl(const Real rad, const Real phi, const Real z) {
   return vel;
 }
 } // namespace
+
+// BELOW FROM cr_diffusion.cpp
+//----------------------------------------------------------------------------------------
+//! User-defined opacity function: calculates absorption and scattering opacities based on
+//  local gas quantities, including ghost zones
+// void Diffusion(MeshBlock *pmb, AthenaArray<Real> &u_cr,
+//                AthenaArray<Real> &prim, AthenaArray<Real> &bcc) {
+//   // set the default opacity to be a large value in the default hydro case
+//   CosmicRay *pcr=pmb->pcr;
+//   int kl=pmb->ks, ku=pmb->ke;
+//   int jl=pmb->js, ju=pmb->je;
+//   int il=pmb->is-1, iu=pmb->ie+1;
+//   if (pmb->block_size.nx2 > 1) {
+//     jl -= 1;
+//     ju += 1;
+//   }
+//   if (pmb->block_size.nx3 > 1) {
+//     kl -= 1;
+//     ku += 1;
+//   }
+
+//   for(int k=kl; k<=ku; ++k) {
+//     for(int j=jl; j<=ju; ++j) {
+// #pragma omp simd
+//       for(int i=il; i<=iu; ++i) {
+//         pcr->sigma_diff(0,k,j,i) = sigma;
+//         pcr->sigma_diff(1,k,j,i) = sigma;
+//         pcr->sigma_diff(2,k,j,i) = sigma;
+//       }
+//     }
+//   }
+
+//   Real invlim=1.0/pcr->vmax;
+
+//   // The information stored in the array
+//   // b_angle is
+//   // b_angle[0]=sin_theta_b
+//   // b_angle[1]=cos_theta_b
+//   // b_angle[2]=sin_phi_b
+//   // b_angle[3]=cos_phi_b
+
+//   for(int k=kl; k<=ku; ++k) {
+//     for(int j=jl; j<=ju; ++j) {
+//   // x component
+//       pmb->pcoord->CenterWidth1(k,j,il-1,iu+1,pcr->cwidth);
+//       for(int i=il; i<=iu; ++i) {
+//          Real distance = 0.5*(pcr->cwidth(i-1) + pcr->cwidth(i+1))
+//                         + pcr->cwidth(i);
+//          Real grad_pr=(u_cr(CRE,k,j,i+1) - u_cr(CRE,k,j,i-1))/3.0;
+//          grad_pr /= distance;
+//          Real va = 0.0;
+//          if (va < TINY_NUMBER) {
+//            pcr->sigma_adv(0,k,j,i) = pcr->max_opacity;
+//            pcr->v_adv(0,k,j,i) = 0.0;
+//          } else {
+//            Real sigma2 = std::abs(grad_pr)/(va * (1.0 + 1.0/3.0)
+//                              * invlim * u_cr(CRE,k,j,i));
+//            if (std::abs(grad_pr) < TINY_NUMBER) {
+//              pcr->sigma_adv(0,k,j,i) = 0.0;
+//              pcr->v_adv(0,k,j,i) = 0.0;
+//            } else {
+//              pcr->sigma_adv(0,k,j,i) = sigma2;
+//              pcr->v_adv(0,k,j,i) = -va * grad_pr/std::abs(grad_pr);
+//            }
+//         }
+//         pcr->sigma_adv(1,k,j,i) = pcr->max_opacity;
+//         pcr->sigma_adv(2,k,j,i) = pcr->max_opacity;
+
+//         pcr->v_adv(1,k,j,i) = 0.0;
+//         pcr->v_adv(2,k,j,i) = 0.0;
+//       }
+//     }
+//   }
+// }
 
 //----------------------------------------------------------------------------------------
 //! User-defined boundary Conditions: sets solution in ghost zones to initial values
