@@ -106,7 +106,7 @@ void DiskOuterX3(MeshBlock *pmb, Coordinates *pco, AthenaArray<Real> &prim,FaceF
 
 void Mesh::InitUserMeshData(ParameterInput *pin) {
   // Get parameters for gravitatonal potential of central point mass
-  gm0 = pin->GetOrAddReal("problem","GM",0.0);
+  gm0 = 1.0; // pin->GetOrAddReal("problem","GM",0.0);
   r0 = pin->GetOrAddReal("problem","r0",1.0);
 
   // Get parameters for initial density and velocity
@@ -273,7 +273,7 @@ Real DenProfileCyl(const Real rad, const Real phi, const Real z) {
   Real p_over_r = p0_over_r0;
   if (NON_BAROTROPIC_EOS) p_over_r = PoverR(rad, phi, z);
   Real denmid = rho0*std::pow(rad/r0, dslope);
-  Real dentem = denmid*std::exp(1.0/p_over_r*(1./std::sqrt(SQR(rad)+SQR(z))-1./rad));
+  Real dentem = denmid*std::exp(gm0/p_over_r*(1./std::sqrt(SQR(rad)+SQR(z))-1./rad));
   den = dentem;
   return std::max(den, dfloor);
 }
