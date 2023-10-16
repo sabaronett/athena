@@ -13,7 +13,7 @@
 
 // C++ headers
 #include <algorithm>  // min
-#include <cmath>      // sqrt
+#include <cmath>      // exp, pow, sqrt
 #include <cstdlib>    // srand
 #include <cstring>    // strcmp()
 #include <fstream>
@@ -46,12 +46,8 @@ Real VelProfileCyl(const Real rad, const Real phi, const Real z);
 Real gm0, r0, rho0, dslope, p0_over_r0, pslope, gamma_gas;
 Real dfloor;
 Real Omega0;
-Real kappa_a;
+Real x1min, crat, prat, kappa_a, R, T;
 } // namespace
-
-// User-defined opacity function for radiation simulations
-// void Diffusion(MeshBlock *pmb, AthenaArray<Real> &u_cr,
-//                AthenaArray<Real> &prim, AthenaArray<Real> &bcc);
 
 // User-defined boundary conditions for disk simulations
 void RadInnerX1(MeshBlock *pmb, Coordinates *pco, NRRadiation *prad,
@@ -97,6 +93,10 @@ void DiskOuterX3(MeshBlock *pmb, Coordinates *pco, AthenaArray<Real> &prim,FaceF
                  Real time, Real dt,
                  int il, int iu, int jl, int ju, int kl, int ku, int ngh);
 
+// User-defined opacity function for radiation simulations
+// void Diffusion(MeshBlock *pmb, AthenaArray<Real> &u_cr,
+//                AthenaArray<Real> &prim, AthenaArray<Real> &bcc);
+
 //========================================================================================
 //! \fn void Mesh::InitUserMeshData(ParameterInput *pin)
 //! \brief Function to initialize problem-specific data in mesh class.  Can also be used
@@ -126,13 +126,13 @@ void Mesh::InitUserMeshData(ParameterInput *pin) {
 
   Omega0 = pin->GetOrAddReal("orbital_advection","Omega0",0.0);
 
-  // Get parameters for radiation
+  // Get (stellar) parameters for radiation
+  x1min = pin->GetOrAddReal("mesh", "x1min", 1.0);
+  crat = pin->GetOrAddReal("radiation", "crat", 1.0);
+  prat = pin->GetOrAddReal("radiation", "prat", 1.0);
   kappa_a = pin->GetOrAddReal("problem", "kappa_a", 0.0);
-
-  // enroll user-defined opacity function
-  // if (NR_RADIATION_ENABLED || IM_RADIATION_ENABLED) {
-  //   EnrollOpacityFunction(Diffusion);
-  // }
+  R = pin->GetOrAddReal("problem", "R", 0.001);
+  T = pin->GetOrAddReal("problem", "T", 1.0);
 
   // enroll user-defined boundary condition
   if (mesh_bcs[BoundaryFace::inner_x1] == GetBoundaryFlag("user")) {
@@ -177,6 +177,11 @@ void Mesh::InitUserMeshData(ParameterInput *pin) {
       EnrollUserRadBoundaryFunction(BoundaryFace::outer_x3, RadOuterX3);
     }
   }
+
+  // enroll user-defined opacity function
+  // if (NR_RADIATION_ENABLED || IM_RADIATION_ENABLED) {
+  //   EnrollOpacityFunction(Diffusion);
+  // }
 
   return;
 }
@@ -232,14 +237,14 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin) {
     for (int k=ks; k<=ke; ++k) {
       for (int j=js; j<=je; ++j) {
         for (int i=is; i<=ie; ++i) {
-          for (int ifr=0; ifr < nfreq; ++ifr) {
-            pnrrad->sigma_s(k,j,i,ifr) = 0.0;  // scattering opacity
-            pnrrad->sigma_a(k,j,i,ifr) = phydro->u(IDN,k,j,i)*kappa_a;
-            pnrrad->sigma_pe(k,j,i,ifr) = 0.0; // absorption Planck mean before E
-            pnrrad->sigma_p(k,j,i,ifr) = 0.0;  // absorption Planck mean before aT^4
+          for (int ifr=0; ifr < nfreq; ++ifr) { // opacities
+            pnrrad->sigma_s(k,j,i,ifr) = 0.0;   // scattering
+            pnrrad->sigma_a(k,j,i,ifr) = phydro->u(IDN,k,j,i)*kappa_a; // absorption
+            pnrrad->sigma_pe(k,j,i,ifr) = 0.0;  // Planck mean (E)
+            pnrrad->sigma_p(k,j,i,ifr) = 0.0;   // Planck mean (aT^4)
           }
           for (int n=0; n<pnrrad->n_fre_ang; ++n) {
-              pnrrad->ir(k,j,i,n) = 0.0;
+              pnrrad->ir(k,j,i,n) = 0.0;        // specific intensity
           }
         }
       }
@@ -380,26 +385,28 @@ void RadInnerX1(MeshBlock *pmb, Coordinates *pco, NRRadiation *prad,
                 const AthenaArray<Real> &w, FaceField &b, AthenaArray<Real> &ir,
                 Real time, Real dt,
                 int is, int ie, int js, int je, int ks, int ke, int ngh) {
-  int nang = prad->nang;       // total n-hat angles N
-  int nact = 0;                // active angles
-  Real mu_xmax = 0;            // max(\mu_x)
-  Real ir_adj = 0;             // adjust intensity (sums to 1)
+  int nang = prad->nang;            // total n-hat angles N
+  int nact = 0;                     // active angles
+  Real mu_xmax = 0;                 // max(\mu_x)
+  Real pi = 3.14159265358979323846; // math.h (2014)
+  Real sigma = prat*crat/4;         // Stefan-Boltzmann constant
+  Real A = std::pow(R, 2);          // surface area (4pi cancels for flux F)
+  Real L = sigma*std::pow(T, 4)*A;  // luminosity
+  Real F = L/std::pow(x1min, 2);    // inner x1 boundary flux from point source at x1 = 0
 
-  for (int n=0; n<nang; ++n) { // find independent of Rad_angles.txt order
+  for (int n=0; n<nang; ++n) {      // find independent of Rad_angles.txt order
     if (prad->mu(0,0,0,0,n) > mu_xmax) mu_xmax = prad->mu(0,0,0,0,n);
   }
-  for (int n=0; n<nang; ++n) { // count active angles
-    if (prad->mu(0,0,0,0,n) == mu_xmax) ++nact;
+  for (int n=0; n<nang; ++n) {      // count active angles
+    if (prad->mu(0,0,0,0,n) == mu_xmax) ++nact; // always four (4)?
   }
 
   for (int k=ks; k<=ke; ++k) {
     for (int j=js; j<=je; ++j) {
       for (int i=1; i<=ngh; ++i) {
         for (int n=0; n<nang; ++n) {
-          ir_adj = 1/(prad->wmu(n)*nact);
-
           if (prad->mu(0,k,j,is-i,n) == mu_xmax) {
-            ir(k,j,is-i,n) = ir_adj;
+            ir(k,j,is-i,n) = F/(crat*prad->wmu(n)*nact*mu_xmax); // using rad component
           } else {
             ir(k,j,is-i,n) = 0.0;
           }
