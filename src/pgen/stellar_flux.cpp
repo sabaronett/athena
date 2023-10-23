@@ -429,25 +429,25 @@ void RadInnerX1(MeshBlock *pmb, Coordinates *pco, NRRadiation *prad,
   Real F = L/std::pow(x1min, 2);     // point source flux
   // check source code for pmb->pmy_mesh to get x1min
 
-  for (int n=0; n<nang; ++n) { // find most radial angle(s)
-    if (prad->mu(0,0,0,0,n) > mu_xmax) mu_xmax = prad->mu(0,0,0,0,n);
-  }
-  for (int n=0; n<nang; ++n) { // count most radial angles
-    if (prad->mu(0,0,0,0,n) == mu_xmax) ++nact; // always four?
-  }
+  // for (int n=0; n<nang; ++n) { // find most radial angle(s)
+  //   if (prad->mu(0,0,0,0,n) > mu_xmax) mu_xmax = prad->mu(0,0,0,0,n);
+  // }
+  // for (int n=0; n<nang; ++n) { // count most radial angles
+  //   if (prad->mu(0,0,0,0,n) == mu_xmax) ++nact; // always four?
+  // }
 
   // defined user output(s) to create temp array to store value of ir for all angles
   for (int k=ks; k<=ke; ++k) {
     for (int j=js; j<=je; ++j) {
       for (int i=1; i<=ngh; ++i) {
+        mu_xmax = 0;
         for (int n=0; n<nang; ++n) { // find most radial angle(s)
-        //   mu_xmax = 0;
-        //   if (prad->mu(0,0,0,0,n) > mu_xmax) mu_xmax = prad->mu(0,0,0,0,n);
-        // }
-        // for (int n=0; n<nang; ++n) { // count most radial angles
-        //   if (prad->mu(0,0,0,0,n) == mu_xmax) ++nact; // always four?
-        // }
-        // for (int n=0; n<nang; ++n) { // activate most radial angle(s)
+          if (prad->mu(0,0,0,0,n) > mu_xmax) mu_xmax = prad->mu(0,0,0,0,n);
+        }
+        for (int n=0; n<nang; ++n) { // count most radial angles
+          if (prad->mu(0,0,0,0,n) == mu_xmax) ++nact; // always four?
+        }
+        for (int n=0; n<nang; ++n) { // activate most radial angle(s)
           if (prad->mu(0,k,j,is-i,n) == mu_xmax) {
             ir(k,j,is-i,n) = F/(crat*prad->wmu(n)*nact*mu_xmax); // using rad component
           } else {
