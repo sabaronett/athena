@@ -192,12 +192,12 @@ void Mesh::InitUserMeshData(ParameterInput *pin) {
 //! used to initialize variables which are global to other functions in this file.
 //! Called in MeshBlock constructor before ProblemGenerator.
 //========================================================================================
-void MeshBlock::InitUserMeshBlockData(ParameterInput *pin) {
-  int nang = pnrrad->nang;       // total n-hat angles N
+// void MeshBlock::InitUserMeshBlockData(ParameterInput *pin) {
+//   int nang = pnrrad->nang;       // total n-hat angles N
 
-  AllocateUserOutputVariables(1 + pnrrad->nang);
-  return;
-}
+//   AllocateUserOutputVariables(1 + pnrrad->nang);
+//   return;
+// }
 
 //========================================================================================
 //! \fn void MeshBlock::ProblemGenerator(ParameterInput *pin)
@@ -270,21 +270,21 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin) {
 //! \fn void MeshBlock::UserWorkBeforeOutput(ParameterInput *pin)
 //! \brief Function called before generating output files
 //========================================================================================
-void MeshBlock::UserWorkBeforeOutput(ParameterInput *pin) {
-  int nang = pnrrad->nang;       // total n-hat angles N
+// void MeshBlock::UserWorkBeforeOutput(ParameterInput *pin) {
+//   int nang = pnrrad->nang;       // total n-hat angles N
 
-  for(int k=(ks - NGHOST); k<=(ke + NGHOST); k++) {
-    for(int j=(js - NGHOST); j<=(je + NGHOST); j++) {
-      for(int i=(is - NGHOST); i<=(ie + NGHOST); i++) {
-        user_out_var(0,k,j,i) = pnrrad->sigma_a(k,j,i,0);  // store absorption opacity
+//   for(int k=(ks - NGHOST); k<=(ke + NGHOST); k++) {
+//     for(int j=(js - NGHOST); j<=(je + NGHOST); j++) {
+//       for(int i=(is - NGHOST); i<=(ie + NGHOST); i++) {
+//         user_out_var(0,k,j,i) = pnrrad->sigma_a(k,j,i,0);  // store absorption opacity
 
-        for (int n=1; n<=nang; ++n) {
-          user_out_var(n,k,j,i) = pnrrad->ir(k,j,i,(n-1)); // store intensities
-        }
-      }
-    }
-  }
-}
+//         for (int n=1; n<=nang; ++n) {
+//           user_out_var(n,k,j,i) = pnrrad->ir(k,j,i,(n-1)); // store intensities
+//         }
+//       }
+//     }
+//   }
+// }
 
 namespace {
 //----------------------------------------------------------------------------------------
