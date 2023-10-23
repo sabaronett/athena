@@ -192,10 +192,10 @@ void Mesh::InitUserMeshData(ParameterInput *pin) {
 //! used to initialize variables which are global to other functions in this file.
 //! Called in MeshBlock constructor before ProblemGenerator.
 //========================================================================================
-void MeshBlock::InitUserMeshBlockData(ParameterInput *pin, NRRadiation *prad) {
-  int nang = prad->nang;       // total n-hat angles N
+void MeshBlock::InitUserMeshBlockData(ParameterInput *pin) {
+  int nang = pnrrad->nang;       // total n-hat angles N
 
-  AllocateUserOutputVariables(1 + prad->nang);
+  AllocateUserOutputVariables(1 + pnrrad->nang);
   return;
 }
 
@@ -270,17 +270,16 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin) {
 //! \fn void MeshBlock::UserWorkBeforeOutput(ParameterInput *pin)
 //! \brief Function called before generating output files
 //========================================================================================
-void MeshBlock::UserWorkBeforeOutput(ParameterInput *pin, NRRadiation *prad,
-                                     AthenaArray<Real> &ir) {
-  int nang = prad->nang;       // total n-hat angles N
+void MeshBlock::UserWorkBeforeOutput(ParameterInput *pin) {
+  int nang = pnrrad->nang;       // total n-hat angles N
 
   for(int k=(ks - NGHOST); k<=(ke + NGHOST); k++) {
     for(int j=(js - NGHOST); j<=(je + NGHOST); j++) {
       for(int i=(is - NGHOST); i<=(ie + NGHOST); i++) {
-        user_out_var(0,k,j,i) = pnrrad->sigma_a(k,j,i,0); // store absorption opacity
+        user_out_var(0,k,j,i) = pnrrad->sigma_a(k,j,i,0);  // store absorption opacity
 
         for (int n=1; n<=nang; ++n) {
-          user_out_var(n,k,j,i) = ir(k,j,i,n);            // store intensities
+          user_out_var(n,k,j,i) = pnrrad->ir(k,j,i,(n-1)); // store intensities
         }
       }
     }
@@ -310,9 +309,11 @@ void GetCylCoord(Coordinates *pco,Real &rad,Real &phi,Real &z,int i,int j,int k)
 Real DenProfileCyl(const Real rad, const Real phi, const Real z) {
   Real den;
   Real p_over_r = p0_over_r0;
+  Real e = 2.7182818284590452;
+
   if (NON_BAROTROPIC_EOS) p_over_r = PoverR(rad, phi, z);
   Real denmid = rho0*std::pow((rad + r0)/r0, dslope)\
-                /(1 + std::exp(-std::exp(EULER)*(rad - r0)/r0));
+                /(1 + std::exp(-std::exp(e)*(rad - r0)/r0));
   Real dentem = denmid*std::exp(gm0/p_over_r*(1./std::sqrt(SQR(rad)+SQR(z))-1./rad));
   den = dentem;
   return std::max(den, dfloor);
