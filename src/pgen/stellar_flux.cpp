@@ -187,6 +187,19 @@ void Mesh::InitUserMeshData(ParameterInput *pin) {
 }
 
 //========================================================================================
+//! \fn void MeshBlock::InitUserMeshBlockData(ParameterInput *pin)
+//! \brief Function to initialize problem-specific data in MeshBlock class.  Can also be
+//! used to initialize variables which are global to other functions in this file.
+//! Called in MeshBlock constructor before ProblemGenerator.
+//========================================================================================
+void MeshBlock::InitUserMeshBlockData(ParameterInput *pin, NRRadiation *prad) {
+  int nang = prad->nang;       // total n-hat angles N
+
+  AllocateUserOutputVariables(1 + prad->nang);
+  return;
+}
+
+//========================================================================================
 //! \fn void MeshBlock::ProblemGenerator(ParameterInput *pin)
 //! \brief Initializes Keplerian accretion disk.
 //========================================================================================
@@ -253,6 +266,27 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin) {
   return;
 }
 
+//========================================================================================
+//! \fn void MeshBlock::UserWorkBeforeOutput(ParameterInput *pin)
+//! \brief Function called before generating output files
+//========================================================================================
+void MeshBlock::UserWorkBeforeOutput(ParameterInput *pin, NRRadiation *prad,
+                                     AthenaArray<Real> &ir) {
+  int nang = prad->nang;       // total n-hat angles N
+
+  for(int k=(ks - NGHOST); k<=(ke + NGHOST); k++) {
+    for(int j=(js - NGHOST); j<=(je + NGHOST); j++) {
+      for(int i=(is - NGHOST); i<=(ie + NGHOST); i++) {
+        user_out_var(0,k,j,i) = pnrrad->sigma_a(k,j,i,0); // store absorption opacity
+
+        for (int n=1; n<=nang; ++n) {
+          user_out_var(n,k,j,i) = ir(k,j,i,n);            // store intensities
+        }
+      }
+    }
+  }
+}
+
 namespace {
 //----------------------------------------------------------------------------------------
 //! transform to cylindrical coordinate
@@ -277,7 +311,8 @@ Real DenProfileCyl(const Real rad, const Real phi, const Real z) {
   Real den;
   Real p_over_r = p0_over_r0;
   if (NON_BAROTROPIC_EOS) p_over_r = PoverR(rad, phi, z);
-  Real denmid = rho0*std::pow(rad/r0, dslope);
+  Real denmid = rho0*std::pow((rad + r0)/r0, dslope)\
+                /(1 + std::exp(-std::exp(EULER)*(rad - r0)/r0));
   Real dentem = denmid*std::exp(gm0/p_over_r*(1./std::sqrt(SQR(rad)+SQR(z))-1./rad));
   den = dentem;
   return std::max(den, dfloor);
@@ -385,26 +420,27 @@ void RadInnerX1(MeshBlock *pmb, Coordinates *pco, NRRadiation *prad,
                 const AthenaArray<Real> &w, FaceField &b, AthenaArray<Real> &ir,
                 Real time, Real dt,
                 int is, int ie, int js, int je, int ks, int ke, int ngh) {
-  int nang = prad->nang;            // total n-hat angles N
-  int nact = 0;                     // active angles
-  Real mu_xmax = 0;                 // max(\mu_x)
-  Real pi = 3.14159265358979323846; // math.h (2014)
-  Real sigma = prat*crat/4;         // Stefan-Boltzmann constant
-  Real A = std::pow(R, 2);          // surface area (4pi cancels for flux F)
-  Real L = sigma*std::pow(T, 4)*A;  // luminosity
-  Real F = L/std::pow(x1min, 2);    // inner x1 boundary flux from point source at x1 = 0
+  int nang = prad->nang;             // total n-hat angles N
+  int nact = 0;                      // active angles
+  Real mu_xmax = 0;                  // max(\mu_x)
+  Real sigma = prat*crat/4;          // Stefan-Boltzmann constant
+  Real A = std::pow(R, 2);           // surface area (4pi cancels for flux F)
+  Real L = sigma*std::pow(T, 4)*A;   // luminosity
+  Real F = L/std::pow(x1min, 2);     // point source flux
+  // check source code for pmb->pmy_mesh to get x1min
 
-  for (int n=0; n<nang; ++n) {      // find independent of Rad_angles.txt order
-    if (prad->mu(0,0,0,0,n) > mu_xmax) mu_xmax = prad->mu(0,0,0,0,n);
-  }
-  for (int n=0; n<nang; ++n) {      // count active angles
-    if (prad->mu(0,0,0,0,n) == mu_xmax) ++nact; // always four (4)?
-  }
-
+  // defined user output(s) to create temp array to store value of ir for all angles
   for (int k=ks; k<=ke; ++k) {
     for (int j=js; j<=je; ++j) {
       for (int i=1; i<=ngh; ++i) {
-        for (int n=0; n<nang; ++n) {
+        for (int n=0; n<nang; ++n) { // find most radial angle(s)
+          mu_xmax = 0;
+          if (prad->mu(0,0,0,0,n) > mu_xmax) mu_xmax = prad->mu(0,0,0,0,n);
+        }
+        for (int n=0; n<nang; ++n) { // count most radial angles
+          if (prad->mu(0,0,0,0,n) == mu_xmax) ++nact; // always four?
+        }
+        for (int n=0; n<nang; ++n) { // activate most radial angle(s)
           if (prad->mu(0,k,j,is-i,n) == mu_xmax) {
             ir(k,j,is-i,n) = F/(crat*prad->wmu(n)*nact*mu_xmax); // using rad component
           } else {
