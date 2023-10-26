@@ -269,13 +269,11 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin) {
 //! \brief Function called before generating output files
 //========================================================================================
 void MeshBlock::UserWorkBeforeOutput(ParameterInput *pin) {
-  int nang = pnrrad->nang;       // total n-hat angles N
-
   for(int k=ks; k<=ke; k++) {
-    for(int j=(js - NGHOST); j<=(je + NGHOST); j++) {
-      for(int i=(is - NGHOST); i<=(ie + NGHOST); i++) {
-        for (int n=0; n<nang; ++n) {
-          user_out_var(n,k,j,i) = pnrrad->ir(k,j,i,n); // store intensities
+    for(int j=js; j<=je; j++) {
+      for(int i=is; i<=(ie+NGHOST); i++) {
+        for (int n=0; n<pnrrad->nang; ++n) {
+          user_out_var(n,k,j,i) = pnrrad->ir(k,j,i-NGHOST,n); // store intensities
         }
       }
     }
@@ -416,15 +414,13 @@ void RadInnerX1(MeshBlock *pmb, Coordinates *pco, NRRadiation *prad,
                 const AthenaArray<Real> &w, FaceField &b, AthenaArray<Real> &ir,
                 Real time, Real dt,
                 int is, int ie, int js, int je, int ks, int ke, int ngh) {
-  int nang = prad->nang;             // total n-hat angles N
-  int nact = 0;                      // active angles
-  Real mu_xmax = 0;                  // max(\mu_x)
-  Real sigma = prat*crat/4;          // Stefan-Boltzmann constant
-  Real A = std::pow(R, 2);           // surface area (4pi cancels for flux F)
-  Real L = sigma*std::pow(T, 4)*A;   // luminosity
-  Real F = L/std::pow(x1min, 2);     // point source flux
+  int nact = 4;                                // active angles
+  Real mu_xmax = 0;                            // max(\mu_x)
+  Real sigma = 5.670374419e-5;                 // [erg/s/cm^2/K^4]
+  Real F = sigma*std::pow(T, 4)*std::pow(R/x1min, 2); // check if *T_unit needed
   // check source code for pmb->pmy_mesh to get x1min
 
+  // OLD (DELETE)
   // for (int n=0; n<nang; ++n) { // find most radial angle(s)
   //   if (prad->mu(0,0,0,0,n) > mu_xmax) mu_xmax = prad->mu(0,0,0,0,n);
   // }
@@ -432,20 +428,20 @@ void RadInnerX1(MeshBlock *pmb, Coordinates *pco, NRRadiation *prad,
   //   if (prad->mu(0,0,0,0,n) == mu_xmax) ++nact; // always four?
   // }
 
-  // defined user output(s) to create temp array to store value of ir for all angles
   for (int k=ks; k<=ke; ++k) {
     for (int j=js; j<=je; ++j) {
       for (int i=1; i<=ngh; ++i) {
-        mu_xmax = 0;
-        for (int n=0; n<nang; ++n) { // find most radial angle(s)
-          if (prad->mu(0,0,0,0,n) > mu_xmax) mu_xmax = prad->mu(0,0,0,0,n);
+        mu_xmax = 0;                           // reset
+        for (int n=0; n<prad->nang; ++n) {     // (re)find most radial angle
+          if (prad->mu(0,k,j,is-i,n) > mu_xmax) mu_xmax = prad->mu(0,k,j,is-i,n);
         }
-        for (int n=0; n<nang; ++n) { // count most radial angles
-          if (prad->mu(0,0,0,0,n) == mu_xmax) ++nact; // always four?
-        }
-        for (int n=0; n<nang; ++n) { // activate most radial angle(s)
+        // for (int n=0; n<nang; ++n) {           // count most radial angles
+        //   if (prad->mu(0,0,0,0,n) == mu_xmax) ++nact; // always four?
+        // }
+        for (int n=0; n<prad->nang; ++n) {     // activate most radial angles
           if (prad->mu(0,k,j,is-i,n) == mu_xmax) {
-            ir(k,j,is-i,n) = F/(crat*prad->wmu(n)*nact*mu_xmax); // using rad component
+            ir(k,j,is-i,n) = F/(nact*mu_xmax); // boost by radial component
+            // ir(k,j,is-i,n) = F/(crat*prad->wmu(n)*nact*mu_xmax);
           } else {
             ir(k,j,is-i,n) = 0.0;
           }
