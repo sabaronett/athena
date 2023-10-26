@@ -46,7 +46,7 @@ Real VelProfileCyl(const Real rad, const Real phi, const Real z);
 Real gm0, r0, rho0, dslope, p0_over_r0, pslope, gamma_gas;
 Real dfloor;
 Real Omega0;
-Real x1min, crat, prat, kappa_a, R, T;
+Real x1min, crat, prat, T_unit, kappa_a, R, T;
 } // namespace
 
 // User-defined boundary conditions for disk simulations
@@ -130,6 +130,7 @@ void Mesh::InitUserMeshData(ParameterInput *pin) {
   x1min = pin->GetOrAddReal("mesh", "x1min", 1.0);
   crat = pin->GetOrAddReal("radiation", "crat", 1.0);
   prat = pin->GetOrAddReal("radiation", "prat", 1.0);
+  T_unit = pin->GetOrAddReal("radiation", "T_unit", 1.0);
   kappa_a = pin->GetOrAddReal("problem", "kappa_a", 0.0);
   R = pin->GetOrAddReal("problem", "R", 0.001);
   T = pin->GetOrAddReal("problem", "T", 1.0);
@@ -414,34 +415,22 @@ void RadInnerX1(MeshBlock *pmb, Coordinates *pco, NRRadiation *prad,
                 const AthenaArray<Real> &w, FaceField &b, AthenaArray<Real> &ir,
                 Real time, Real dt,
                 int is, int ie, int js, int je, int ks, int ke, int ngh) {
-  int nact = 4;                                // active angles
-  Real mu_xmax = 0;                            // max(\mu_x)
-  Real sigma = 5.670374419e-5;                 // [erg/s/cm^2/K^4]
-  Real F = sigma*std::pow(T, 4)*std::pow(R/x1min, 2); // check if *T_unit needed
+  int nact = 4;                            // active angles
+  Real mu_xmax = 0;                        // max(\mu_x)
+  Real sigma = 5.670374419e-5;             // [erg/s/cm^2/K^4]
+  Real F = sigma*std::pow(T*T_unit, 4)*std::pow(R/x1min, 2);
   // check source code for pmb->pmy_mesh to get x1min
-
-  // OLD (DELETE)
-  // for (int n=0; n<nang; ++n) { // find most radial angle(s)
-  //   if (prad->mu(0,0,0,0,n) > mu_xmax) mu_xmax = prad->mu(0,0,0,0,n);
-  // }
-  // for (int n=0; n<nang; ++n) { // count most radial angles
-  //   if (prad->mu(0,0,0,0,n) == mu_xmax) ++nact; // always four?
-  // }
 
   for (int k=ks; k<=ke; ++k) {
     for (int j=js; j<=je; ++j) {
       for (int i=1; i<=ngh; ++i) {
-        mu_xmax = 0;                           // reset
-        for (int n=0; n<prad->nang; ++n) {     // (re)find most radial angle
+        mu_xmax = 0;                       // reset
+        for (int n=0; n<prad->nang; ++n) { // (re)find most radial angle
           if (prad->mu(0,k,j,is-i,n) > mu_xmax) mu_xmax = prad->mu(0,k,j,is-i,n);
         }
-        // for (int n=0; n<nang; ++n) {           // count most radial angles
-        //   if (prad->mu(0,0,0,0,n) == mu_xmax) ++nact; // always four?
-        // }
-        for (int n=0; n<prad->nang; ++n) {     // activate most radial angles
+        for (int n=0; n<prad->nang; ++n) { // activate most radial angles
           if (prad->mu(0,k,j,is-i,n) == mu_xmax) {
-            ir(k,j,is-i,n) = F/(nact*mu_xmax); // boost by radial component
-            // ir(k,j,is-i,n) = F/(crat*prad->wmu(n)*nact*mu_xmax);
+            ir(k,j,is-i,n) = F/(prad->wmu(n)*nact*mu_xmax);
           } else {
             ir(k,j,is-i,n) = 0.0;
           }
