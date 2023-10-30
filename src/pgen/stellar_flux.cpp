@@ -415,7 +415,7 @@ void RadInnerX1(MeshBlock *pmb, Coordinates *pco, NRRadiation *prad,
                 const AthenaArray<Real> &w, FaceField &b, AthenaArray<Real> &ir,
                 Real time, Real dt,
                 int is, int ie, int js, int je, int ks, int ke, int ngh) {
-  int nact = 4;                            // active angles
+  int nact = 0;                            // active angles
   Real mu_xmax = 0;                        // max(\mu_x)
   Real sigma = 5.670374419e-5;             // [erg/s/cm^2/K^4]
   Real F = sigma*std::pow(T*T_unit, 4)*std::pow(R/x1min, 2);
@@ -424,13 +424,17 @@ void RadInnerX1(MeshBlock *pmb, Coordinates *pco, NRRadiation *prad,
   for (int k=ks; k<=ke; ++k) {
     for (int j=js; j<=je; ++j) {
       for (int i=1; i<=ngh; ++i) {
-        mu_xmax = 0;                       // reset
+        mu_xmax = 0;                       // reset for new ghost zone
+        nact = 0;
         for (int n=0; n<prad->nang; ++n) { // (re)find most radial angle
           if (prad->mu(0,k,j,is-i,n) > mu_xmax) mu_xmax = prad->mu(0,k,j,is-i,n);
         }
+        for (int n=0; n<prad->nang; ++n) { // count most radial angles
+          if (prad->mu(0,k,j,is-i,n) == mu_xmax) ++nact;
+        }
         for (int n=0; n<prad->nang; ++n) { // activate most radial angles
           if (prad->mu(0,k,j,is-i,n) == mu_xmax) {
-            ir(k,j,is-i,n) = F/(prad->wmu(n)*nact*mu_xmax);
+            ir(k,j,is-i,n) = F/(nact*prad->wmu(n)*mu_xmax);
           } else {
             ir(k,j,is-i,n) = 0.0;
           }
