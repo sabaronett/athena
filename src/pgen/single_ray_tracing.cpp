@@ -361,7 +361,10 @@ void RadInnerX1(MeshBlock *pmb, Coordinates *pco, NRRadiation *prad,
         }
         for (int n=0; n<prad->nang; ++n) { // activate most radial angles
           if (prad->mu(0,k,j,is-i,n) == mu_xmax) {
-            if( ((pco->x2v(j) - 0.5*PI) * prad->mu(1,k,j,is-i,n) > 0.0)){
+            if (std::abs(pco->x2v(j) - 0.5*PI) < pco->dx2v(j)) {
+              ir(k,j,is-i,n) = F/(prad->wmu(n)*mu_xmax*2*npsi);
+            }
+            else if (((pco->x2v(j) - 0.5*PI) * prad->mu(1,k,j,is-i,n) > 0.0)) {
               ir(k,j,is-i,n) = F/(prad->wmu(n)*mu_xmax*npsi);
             }
           } else {
