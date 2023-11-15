@@ -492,9 +492,9 @@ void RadIntegrator::GetHydroSourceTerms(MeshBlock *pmb,
             frz_fr += ir_weight * prad->mu(2,k,j,i,n);
           }
           delta_source(0,ifr) = er_fr  - delta_source(0,ifr);
-          delta_source(1,ifr) = frx_fr - delta_source(1,ifr);
-          delta_source(2,ifr) = fry_fr - delta_source(2,ifr);
-          delta_source(3,ifr) = frz_fr - delta_source(3,ifr);
+          // delta_source(1,ifr) = frx_fr - delta_source(1,ifr);
+          // delta_source(2,ifr) = fry_fr - delta_source(2,ifr);
+          // delta_source(3,ifr) = frz_fr - delta_source(3,ifr);
         }
 
         Real delta_er = 0.0, delta_frx=0.0, delta_fry = 0.0, delta_frz = 0.0;
