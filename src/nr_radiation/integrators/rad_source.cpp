@@ -492,9 +492,9 @@ void RadIntegrator::GetHydroSourceTerms(MeshBlock *pmb,
             frz_fr += ir_weight * prad->mu(2,k,j,i,n);
           }
           delta_source(0,ifr) = er_fr  - delta_source(0,ifr);
-          // delta_source(1,ifr) = frx_fr - delta_source(1,ifr);
-          // delta_source(2,ifr) = fry_fr - delta_source(2,ifr);
-          // delta_source(3,ifr) = frz_fr - delta_source(3,ifr);
+          delta_source(1,ifr) = frx_fr - delta_source(1,ifr);
+          delta_source(2,ifr) = fry_fr - delta_source(2,ifr);
+          delta_source(3,ifr) = frz_fr - delta_source(3,ifr);
         }
 
         Real delta_er = 0.0, delta_frx=0.0, delta_fry = 0.0, delta_frz = 0.0;
@@ -531,9 +531,9 @@ void RadIntegrator::AddSourceTerms(MeshBlock *pmb, AthenaArray<Real> &u) {
   for (int k=ks; k<=ke; ++k) {
     for (int j=js; j<=je; ++j) {
       for (int i=is; i<=ie; ++i) {
-        u(IM1,k,j,i) += rad_source(1,k,j,i);
-        u(IM2,k,j,i) += rad_source(2,k,j,i);
-        u(IM3,k,j,i) += rad_source(3,k,j,i);
+        // u(IM1,k,j,i) += rad_source(1,k,j,i);
+        // u(IM2,k,j,i) += rad_source(2,k,j,i);
+        // u(IM3,k,j,i) += rad_source(3,k,j,i);
 
         //limit the velocity by speed of light
         Real vx = u(IM1,k,j,i)/u(IDN,k,j,i);
