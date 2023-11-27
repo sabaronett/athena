@@ -234,7 +234,7 @@ void MeshBlock::ProblemGenerator(ParameterInput *pin) {
           phydro->u(IM3,k,j,i) = 0.0;
         } else if (std::strcmp(COORDINATE_SYSTEM, "spherical_polar") == 0) {
           phydro->u(IM2,k,j,i) = 0.0;
-          phydro->u(IM3,k,j,i) = 0.0 * den*vel;
+          phydro->u(IM3,k,j,i) = 0.0*den*vel;
         }
 
         if (NON_BAROTROPIC_EOS) {
@@ -315,7 +315,7 @@ Real DenProfileCyl(const Real rad, const Real phi, const Real z) {
                 /(1 + std::exp(-std::exp(EULER)*(rad - r0)/r0));
   Real dentem = denmid*std::exp(gm0/p_over_r*(1./std::sqrt(SQR(rad)+SQR(z))-1./rad));
   den = dentem;
-  return std::max(den, dfloor);
+  return std::max(den,dfloor);
 }
 
 //----------------------------------------------------------------------------------------
@@ -347,8 +347,13 @@ void RadInnerX1(MeshBlock *pmb, Coordinates *pco, NRRadiation *prad,
                 Real time, Real dt,
                 int is, int ie, int js, int je, int ks, int ke, int ngh) {
   Real mu_xmax = 0;                        // max(\mu_x)
-  Real sigma = 5.670374419e-5;             // [erg/s/cm^2/K^4]
-  Real F = sigma*std::pow(T*T_unit, 4)*std::pow(R/x1min, 2);
+  // Real sigma = 5.670374419e-5;             // Stefan--Boltzmann constant [erg/s/cm^2/K^4]
+  // Real arad = 7.565733250033928e-15;       // [erg/cm^3/K^4]
+  // Real c_speed = 2.99792458e10;            // speed of light [cm/s]
+  // Real F = sigma*std::pow(T*T_unit, 4)*std::pow(R/x1min, 2)/c_speed/arad\
+  //          /std::pow(T_unit, 4); // 2023/11/20 w/ YFJ
+  // sigma*4/arad/c_speed = 1 (see RL79, eq. 1.44a)
+  Real F = std::pow(T, 4)*std::pow(R/x1min, 2);
   // check source code for pmb->pmy_mesh to get x1min
 
   for (int k=ks; k<=ke; ++k) {
