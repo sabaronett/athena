@@ -353,7 +353,7 @@ void RadInnerX1(MeshBlock *pmb, Coordinates *pco, NRRadiation *prad,
   // Real F = sigma*std::pow(T*T_unit, 4)*std::pow(R/x1min, 2)/c_speed/arad\
   //          /std::pow(T_unit, 4); // 2023/11/20 w/ YFJ
   // sigma*4/arad/c_speed = 1 (see RL79, eq. 1.44a)
-  Real F = std::pow(T, 4)*std::pow(R/x1min, 2);
+  Real F = 4*std::pow(T, 4)*std::pow(R/x1min, 2);
   // check source code for pmb->pmy_mesh to get x1min
 
   for (int k=ks; k<=ke; ++k) {
