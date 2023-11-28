@@ -347,14 +347,7 @@ void RadInnerX1(MeshBlock *pmb, Coordinates *pco, NRRadiation *prad,
                 Real time, Real dt,
                 int is, int ie, int js, int je, int ks, int ke, int ngh) {
   Real mu_xmax = 0;                        // max(\mu_x)
-  // Real sigma = 5.670374419e-5;             // Stefan--Boltzmann constant [erg/s/cm^2/K^4]
-  // Real arad = 7.565733250033928e-15;       // [erg/cm^3/K^4]
-  // Real c_speed = 2.99792458e10;            // speed of light [cm/s]
-  // Real F = sigma*std::pow(T*T_unit, 4)*std::pow(R/x1min, 2)/c_speed/arad\
-  //          /std::pow(T_unit, 4); // 2023/11/20 w/ YFJ
-  // sigma*4/arad/c_speed = 1 (see RL79, eq. 1.44a)
-  Real F = 4*std::pow(T, 4)*std::pow(R/x1min, 2);
-  // check source code for pmb->pmy_mesh to get x1min
+  Real F = std::pow(T, 4)*std::pow(R/x1min, 2)/4; // can get x1min from pmb->pmy_mesh
 
   for (int k=ks; k<=ke; ++k) {
     for (int j=js; j<=je; ++j) {
@@ -367,10 +360,10 @@ void RadInnerX1(MeshBlock *pmb, Coordinates *pco, NRRadiation *prad,
         for (int n=0; n<prad->nang; ++n) { // activate most radial angles
           if (prad->mu(0,k,j,is-i,n) == mu_xmax) {
             if (std::abs(pco->x2v(j) - 0.5*PI) < pco->dx2v(j)) {
-              ir(k,j,is-i,n) = F/(prad->wmu(n)*mu_xmax*2*npsi);
+              ir(k,j,is-i,n) = F/(prad->wmu(n)*mu_xmax*4*npsi);
             }
             else if (((pco->x2v(j) - 0.5*PI) * prad->mu(1,k,j,is-i,n) > 0.0)) {
-              ir(k,j,is-i,n) = F/(prad->wmu(n)*mu_xmax*npsi);
+              ir(k,j,is-i,n) = F/(prad->wmu(n)*mu_xmax*2*npsi);
             }
           } else {
             ir(k,j,is-i,n) = 0.0;
