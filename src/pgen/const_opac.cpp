@@ -560,7 +560,7 @@ void DiskOuterX1(MeshBlock *pmb,Coordinates *pco, AthenaArray<Real> &prim, FaceF
             vel -= vK(pmb->porb, pco->x1v(iu+i), pco->x2v(j), pco->x3v(k));
           prim(IM1,k,j,iu+i) = 0.0;
           prim(IM2,k,j,iu+i) = 0.0;
-          prim(IM3,k,j,iu+i) = vel;
+          prim(IM3,k,j,iu+i) = 0.0*vel;
           if (NON_BAROTROPIC_EOS)
             prim(IEN,k,j,iu+i) = PoverR(rad, phi, z)*prim(IDN,k,j,iu+i);
         }
