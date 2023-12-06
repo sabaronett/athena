@@ -554,15 +554,15 @@ void DiskOuterX1(MeshBlock *pmb,Coordinates *pco, AthenaArray<Real> &prim, FaceF
       for (int j=jl; j<=ju; ++j) {
         for (int i=1; i<=ngh; ++i) {
           GetCylCoord(pco,rad,phi,z,iu+i,j,k);
-          prim(IDN,k,j,iu+i) = DenProfileCyl(rad,phi,z);
+          prim(IDN,k,j,iu+i) = prim(IDN,k,j,iu); //DenProfileCyl(rad,phi,z);
           vel = VelProfileCyl(rad,phi,z);
           if (pmb->porb->orbital_advection_defined)
             vel -= vK(pmb->porb, pco->x1v(iu+i), pco->x2v(j), pco->x3v(k));
-          prim(IM1,k,j,iu+i) = 0.0;
-          prim(IM2,k,j,iu+i) = 0.0;
-          prim(IM3,k,j,iu+i) = 0.0*vel;
+          prim(IM1,k,j,iu+i) = prim(IM1,k,j,iu); //0.0;
+          prim(IM1,k,j,iu+i) = prim(IM1,k,j,iu); //0.0;
+          prim(IM3,k,j,iu+i) = prim(IM3,k,j,iu); //vel;
           if (NON_BAROTROPIC_EOS)
-            prim(IEN,k,j,iu+i) = PoverR(rad, phi, z)*prim(IDN,k,j,iu+i);
+            prim(IEN,k,j,iu+i) = prim(IEN,k,j,iu); //PoverR(rad, phi, z)*prim(IDN,k,j,iu+i);
         }
       }
     }
