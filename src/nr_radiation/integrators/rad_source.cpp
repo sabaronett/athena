@@ -568,11 +568,17 @@ void RadIntegrator::AddSourceTerms(MeshBlock *pmb, AthenaArray<Real> &u) {
           if (eint < 0.0) {
             eint = tgas_new_(k,j,i) * u(IDN,k,j,i)/gm1;
             u(IEN,k,j,i) = eint + pb + ekin;
+            if (u(IEN,k,j,i)/u(IDN,k,j,i)*gm1 < 1e-3)
+              std::cout << "NOTE: T_min < 1e-3" << std::endl;
           } else if (tgas > prad->t_ceiling_(k,j,i)) {
             eint = prad->t_ceiling_(k,j,i) * u(IDN,k,j,i)/gm1;
             u(IEN,k,j,i) = ekin + pb + eint;
+            if (u(IEN,k,j,i)/u(IDN,k,j,i)*gm1 < 1e-3)
+              std::cout << "NOTE: T_min < 1e-3" << std::endl;
           } else {
             u(IEN,k,j,i) += e_source;
+            if (u(IEN,k,j,i)/u(IDN,k,j,i)*gm1 < 1e-3)
+              std::cout << "NOTE: T_min < 1e-3" << std::endl;
           }
         }
       }
