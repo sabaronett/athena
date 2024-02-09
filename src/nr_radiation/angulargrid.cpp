@@ -302,7 +302,7 @@ void NRRadiation::AngularGrid(int angle_flag, int nmu) {
 // This is the so-called spherical polar tetrad,
 // which is ideal for spherical polar coordinate
 
-// nzeta is number of zeta angles in one octant
+// nzeta is the number of zeta angles between 0 and pi
 // npsi is the number of psi angles between 0 and pi
 void NRRadiation::AngularGrid(int angle_flag, int nzeta, int npsi) {
   MeshBlock *pmb=pmy_block;
@@ -326,49 +326,40 @@ void NRRadiation::AngularGrid(int angle_flag, int nzeta, int npsi) {
     // separate ghost zones and active zones
     // so that they can be compatible with different angular scheme
     if (nzeta > 0) {
-      coszeta_v.NewAthenaArray(2*nzeta);
-      zeta_v_full.NewAthenaArray(2*nzeta+2*NGHOST);
-      zeta_f_full.NewAthenaArray(2*nzeta+1+2*NGHOST);
-      dzeta_v.NewAthenaArray(2*nzeta+2*NGHOST);
-      dzeta_f.NewAthenaArray(2*nzeta+1+2*NGHOST);
-      coszeta_f.NewAthenaArray(2*nzeta+1);
-      len_zeta.NewAthenaArray(2*nzeta); // This id Delta (cos\theta)
+      coszeta_v.NewAthenaArray(nzeta);
+      zeta_v_full.NewAthenaArray(nzeta+NGHOST);
+      zeta_f_full.NewAthenaArray(nzeta+1+NGHOST);
+      dzeta_v.NewAthenaArray(nzeta+NGHOST);
+      dzeta_f.NewAthenaArray(nzeta+1+NGHOST);
+      coszeta_f.NewAthenaArray(nzeta+1);
+      len_zeta.NewAthenaArray(nzeta); // This is \Delta(cos\theta)
 
-      int zs = 0; // ze = 2*nzeta - 1;
+      Real dcoszeta = 2.0/nzeta;
+      coszeta_f(0) = 1.0; // north pole
 
-      Real dcoszeta = 1.0/nzeta;
-      coszeta_f(zs) = 1.0;
-      for (int i=1; i<nzeta; ++i) {
-        coszeta_f(i+zs) = 1.0 - i *dcoszeta;
+      for (int i=1; i<nzeta+1; ++i) {
+        coszeta_f(i) = 1.0 - i*dcoszeta;
       }
-      coszeta_f(nzeta+zs) = 0.0;
-      for (int i=nzeta+1; i<2*nzeta+1; ++i)
-        coszeta_f(i+zs) = -coszeta_f(2*nzeta-i+zs);
+      for (int i=0; i<nzeta; ++i) {
+        coszeta_v(i) = (coszeta_f(i) + coszeta_f(i+1))/2;
+      }
+      // re-normalize
+      Real normalization = nzeta/std::sqrt(nzeta*nzeta - 1);
 
       for (int i=0; i<nzeta; ++i) {
-        coszeta_v(i+zs) = 0.5*(coszeta_f(i+zs)+coszeta_f(i+zs+1));
+        coszeta_v(i) *= normalization;
       }
-    // re-normalize
-      Real normalization = 2*nzeta/std::sqrt(4*nzeta*nzeta-1);
-
       for (int i=0; i<nzeta; ++i) {
-        coszeta_v(i+zs) *= normalization;
-      }
-      for (int i=nzeta; i<2*nzeta; ++i) {
-        coszeta_v(i+zs) = -coszeta_v(2*nzeta-i-1+zs);
-      }
-
-      for (int i=0; i<nzeta*2; ++i) {
         len_zeta(i) = coszeta_f(i) - coszeta_f(i+1);
       }
 
 
       // the following arrays include ghost zones
       // this is used for reconstruction
-      for (int i=0; i<2*nzeta; ++i) {
+      for (int i=0; i<nzeta; ++i) {
         zeta_v_full(i+NGHOST) = acos(coszeta_v(i));
       }
-      for (int i=0; i<2*nzeta+1; ++i) {
+      for (int i=0; i<nzeta+1; ++i) {
         zeta_f_full(i+NGHOST) = acos(coszeta_f(i));
       }
       for (int i=1; i<=NGHOST; ++i) {
@@ -376,14 +367,14 @@ void NRRadiation::AngularGrid(int angle_flag, int nzeta, int npsi) {
         zeta_v_full(NGHOST-i) = zeta_v_full(NGHOST-i+1) - delta;
       }
       for (int i=1; i<=NGHOST; ++i) {
-        Real delta = zeta_v_full(2*nzeta+NGHOST-i) - zeta_v_full(2*nzeta+NGHOST-i-1);
-        zeta_v_full(2*nzeta+NGHOST+i-1) = zeta_v_full(2*nzeta+NGHOST+i-2) + delta;
+        Real delta = zeta_v_full(nzeta+NGHOST-i) - zeta_v_full(nzeta+NGHOST-i-1);
+        zeta_v_full(nzeta+NGHOST+i-1) = zeta_v_full(nzeta+NGHOST+i-2) + delta;
       }
 
-      for (int i=0; i<2*nzeta+2*NGHOST-1; ++i) {
+      for (int i=0; i<nzeta+NGHOST-1; ++i) {
         dzeta_v(i) = zeta_v_full(i+1) - zeta_v_full(i);
       }
-      for (int i=0; i<2*nzeta+1; ++i) {
+      for (int i=0; i<nzeta+1; ++i) {
         zeta_f_full(i+NGHOST) = acos(coszeta_f(i));
       }
 
@@ -393,11 +384,11 @@ void NRRadiation::AngularGrid(int angle_flag, int nzeta, int npsi) {
       }
 
       for (int i=1; i<=NGHOST; ++i) {
-        Real delta = zeta_f_full(2*nzeta+NGHOST-i+1) - zeta_f_full(2*nzeta+NGHOST-i);
-        zeta_f_full(2*nzeta+NGHOST+i) = zeta_f_full(2*nzeta+NGHOST+i-1) + delta;
+        Real delta = zeta_f_full(nzeta+NGHOST-i+1) - zeta_f_full(nzeta+NGHOST-i);
+        zeta_f_full(nzeta+NGHOST+i) = zeta_f_full(nzeta+NGHOST+i-1) + delta;
       }
 
-      for (int i=0; i<2*nzeta+2*NGHOST; ++i) {
+      for (int i=0; i<nzeta+NGHOST; ++i) {
         dzeta_f(i) = zeta_f_full(i+1)-zeta_f_full(i);
       }
 
@@ -494,7 +485,7 @@ void NRRadiation::AngularGrid(int angle_flag, int nzeta, int npsi) {
     // for 1D problem
     if (ndim == 1) {
       for (int i=0; i<n1z; ++i) {
-         for (int n=0; n<2*nzeta; ++n) {
+         for (int n=0; n<nzeta; ++n) {
             //x,k,j,i,n
             mu(0,0,0,i,n) = coszeta_v(n);
          }
@@ -503,7 +494,7 @@ void NRRadiation::AngularGrid(int angle_flag, int nzeta, int npsi) {
       for (int j=0; j<n2z; ++j) {
         for (int i=0; i<n1z; ++i) {
           if (npsi == 1) {
-            for (int n=0; n<2*nzeta; ++n) {
+            for (int n=0; n<nzeta; ++n) {
               for (int m=0; m<2*npsi; ++m) {
                 int ang_num = n*(2*npsi)+m;
                 Real sinzeta_v = std::sqrt(1.0 - coszeta_v(n)
@@ -518,7 +509,7 @@ void NRRadiation::AngularGrid(int angle_flag, int nzeta, int npsi) {
           } else {// the case in x -y plane
             if (std::strcmp(COORDINATE_SYSTEM, "spherical_polar") == 0) {
               // in spherical polar, 2D, we still need 3D angular grid
-              for (int n=0; n<2*nzeta; ++n) {
+              for (int n=0; n<nzeta; ++n) {
                 for (int m=0; m<2*npsi; ++m) {
                   int ang_num = n*(2*npsi)+m;
                   Real sinzeta_v = std::sqrt(1.0 - coszeta_v(n)
@@ -543,7 +534,7 @@ void NRRadiation::AngularGrid(int angle_flag, int nzeta, int npsi) {
       for (int k=0; k<n3z; ++k) {
         for (int j=0; j<n2z; ++j) {
           for (int i=0; i<n1z; ++i) {
-            for (int n=0; n<2*nzeta; ++n) {
+            for (int n=0; n<nzeta; ++n) {
               for (int m=0; m<2*npsi; ++m) {
                 int ang_num = n*(2*npsi)+m;
                 Real sinzeta_v = std::sqrt(1.0 - coszeta_v(n)

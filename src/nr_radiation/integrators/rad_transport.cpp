@@ -369,10 +369,10 @@ void RadIntegrator::CalculateFluxes(AthenaArray<Real> &w,
               }
 //#pragma omp simd
               for (int n=1; n<=NGHOST; ++n) {
-                q_zeta_(2*nzeta+NGHOST+n-1) = q_zeta_(2*nzeta+NGHOST-n);
+                q_zeta_(nzeta+NGHOST+n-1) = q_zeta_(nzeta+NGHOST-n);
               }
               int zl = NGHOST-1;
-              int zu = 2*nzeta+NGHOST;
+              int zu = nzeta+NGHOST;
               if (order == 1) {
                 pmb->precon->DonorCellZeta(prad,zl,zu,q_zeta_,
                                            ql_zeta_,qr_zeta_);
@@ -408,7 +408,7 @@ void RadIntegrator::CalculateFluxes(AthenaArray<Real> &w,
           for (int ifr=0; ifr<nfreq; ++ifr) {
             int &nzeta = prad->nzeta;
             int &npsi = prad->npsi;
-            int zeta_limit=2*nzeta;
+            int zeta_limit=nzeta;
             if (nzeta == 0) zeta_limit=1;
 
             for (int n=0; n<zeta_limit; ++n) {
@@ -769,7 +769,7 @@ void RadIntegrator::FluxDivergence(const Real wght, AthenaArray<Real> &ir_in,
             if (nzeta * npsi > 0) {
               for (int m=0; m<2*npsi; ++m) {
 //#pragma omp simd
-                for (int n=0; n<2*nzeta; ++n) {
+                for (int n=0; n<nzeta; ++n) {
                   int ang_num = n*2*npsi + m;
                   int ang_num1 = (n+1)*2*npsi+m;
                   dflx_ang(ang_num) += (area_zeta(m,n+1) * zeta_flux_(k,j,i,ifr,ang_num1)
@@ -777,7 +777,7 @@ void RadIntegrator::FluxDivergence(const Real wght, AthenaArray<Real> &ir_in,
                 }
               }
               // now psi flux
-              for (int n=0; n<2*nzeta; ++n) {
+              for (int n=0; n<nzeta; ++n) {
                 Real *flxn = &(dflx_ang(n*2*npsi));
                 Real *areapsi = &(area_psi(n,0));
                 Real *psiflx = &(psi_flux_(k,j,i,ifr,n*2*npsi));
@@ -790,7 +790,7 @@ void RadIntegrator::FluxDivergence(const Real wght, AthenaArray<Real> &ir_in,
               Real *flxn = &(dflx_ang(0));
               Real *areazeta = &(area_zeta(0));
               Real *zetaflx = &(zeta_flux_(k,j,i,ifr,0));
-              for (int n=0; n<2*nzeta; ++n) {
+              for (int n=0; n<nzeta; ++n) {
                 flxn[n] += (areazeta[n+1] * zetaflx[n+1]
                             - areazeta[n] * zetaflx[n]);
               }

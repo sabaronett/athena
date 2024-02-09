@@ -63,20 +63,20 @@ void RadIntegrator::ImplicitAngularFluxesCoef(const Real wght) {
     for (int j=js; j<=je; ++j)
       for (int i=is; i<=ie; ++i) {
         if (prad->npsi == 0) {
-        // first, related all angle to 2*nzeta
+        // first, related all angle to nzeta
           pco->GetGeometryZeta(prad,k,j,i,g_zeta_);
         // The relation is I_m = coef *I_m+1 + const
 
         // now, all the other angles
         //  Ir_new - ir_old + coef0 * Ir_l + coef1 ir_ new = 0.0;
-          for (int n=0; n<2*nzeta; ++n) {
+          for (int n=0; n<nzeta; ++n) {
             Real coef0 = wght * g_zeta_(n) * prad->reduced_c *
                        area_zeta(n)/ang_vol(n);
             Real coef1 = -wght * g_zeta_(n+1) * prad->reduced_c *
                        area_zeta(n+1)/ang_vol(n);
           // the equation is
           // ir_new - ir_old + coef0 * ir_new + coef1 * ir_new1 = 0
-            if (n == 2*nzeta-1) {
+            if (n == nzeta-1) {
               imp_ang_coef_r_(k,j,i,n) = 0.0;
               imp_ang_coef_(k,j,i,n) = coef0 + coef1;
             } else {
@@ -85,12 +85,12 @@ void RadIntegrator::ImplicitAngularFluxesCoef(const Real wght) {
             }
           }
         } else {
-          // first, starting from the zeta angle 2*nzeta-1
+          // first, starting from the zeta angle nzeta-1
           // zeta area is only 0 at nzeta=0, not zero at nzeta
           pco->GetGeometryZeta(prad,k,j,i,g_zeta_);
 
-          // now go from 2*nzeta-2 to 0
-          for (int n=0; n<2*nzeta; ++n) {
+          // now go from nzeta-2 to 0
+          for (int n=0; n<nzeta; ++n) {
             Real zeta_coef0 =  wght * g_zeta_(n) * prad->reduced_c;
             Real zeta_coef1 = -wght * g_zeta_(n+1) * prad->reduced_c;
             ImplicitPsiFluxCoef(k,j,i, n, wght, zeta_coef1, zeta_coef0);
@@ -156,16 +156,16 @@ void RadIntegrator::ImplicitAngularFluxes(const int k, const int j, const int i,
 
   for (int ifr=0; ifr<nfreq; ++ifr) {
     if (prad->npsi == 0) {
-      // the angle 2*nzeta-1 does not contribute to ang_flx_
+      // the angle nzeta-1 does not contribute to ang_flx_
       Real *p_angflx = &(ang_flx_(k,j,i,ifr*nang));
       Real *coef_r = &(imp_ang_coef_r_(k,j,i,0));
       Real *p_ir = &(ir_ini(k,j,i,ifr*nang));
-      for (int n=0; n<2*nzeta-1; ++n) {
+      for (int n=0; n<nzeta-1; ++n) {
         p_angflx[n] = -coef_r[n] * p_ir[n+1];
       }
     } else {
-      // now go from 2*nzeta-2 to 0
-      for (int n=0; n<2*nzeta; ++n) {
+      // now go from nzeta-2 to 0
+      for (int n=0; n<nzeta; ++n) {
         ImplicitPsiFlux(k,j,i, ifr, n, ir_ini);
       }
     }

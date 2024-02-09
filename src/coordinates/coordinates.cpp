@@ -763,13 +763,13 @@ void Coordinates::ZetaArea(NRRadiation *prad, AthenaArray<Real> &area) {
     int npsi = prad->npsi;
     if (npsi * nzeta > 0) {
       for (int m=0; m<2*npsi; ++m) {
-        for (int n=0; n<2*nzeta+1; ++n) {
+        for (int n=0; n<nzeta+1; ++n) {
           Real sinzeta_sq= 1.0 - prad->coszeta_f(n) * prad->coszeta_f(n);
           area(m,n) = sinzeta_sq * prad->len_psi(m);
         }// end psi
       }// end zeta
     } else if (nzeta > 0) {
-      for (int n=0; n<2*nzeta+1; ++n) {
+      for (int n=0; n<nzeta+1; ++n) {
         area(n) = 1.0 - prad->coszeta_f(n) * prad->coszeta_f(n);
       }
     }
@@ -781,7 +781,7 @@ void Coordinates::PsiArea(NRRadiation *prad, AthenaArray<Real> &area) {
     int nzeta = prad->nzeta;
     int npsi = prad->npsi;
     if (npsi * nzeta > 0) {
-      for (int n=0; n<2*nzeta; ++n) {
+      for (int n=0; n<nzeta; ++n) {
         for (int m=0; m<2*npsi+1; ++m) {
           area(n,m) = prad->len_zeta(n);
         }
@@ -799,7 +799,7 @@ void Coordinates::AngularVol(NRRadiation *prad, AthenaArray<Real> &vol) {
     int nzeta = prad->nzeta;
     int npsi = prad->npsi;
     if (npsi * nzeta > 0) {
-      for (int n=0; n<2*nzeta; ++n) {
+      for (int n=0; n<nzeta; ++n) {
         for (int m=0; m<2*npsi; ++m) {
           int ang_num = n*(2*npsi)+m;
           vol(ang_num) = prad->len_zeta(n) * prad->len_psi(m);
@@ -809,7 +809,7 @@ void Coordinates::AngularVol(NRRadiation *prad, AthenaArray<Real> &vol) {
       for (int m=0; m<2*npsi; ++m)
         vol(m) = prad->len_psi(m);
     } else if (nzeta > 0) {
-      for (int n=0; n<2*nzeta; ++n)
+      for (int n=0; n<nzeta; ++n)
         vol(n) = prad->len_zeta(n);
     }
   }
