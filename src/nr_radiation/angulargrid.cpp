@@ -327,10 +327,10 @@ void NRRadiation::AngularGrid(int angle_flag, int nzeta, int npsi) {
     // so that they can be compatible with different angular scheme
     if (nzeta > 0) {
       coszeta_v.NewAthenaArray(nzeta);
-      zeta_v_full.NewAthenaArray(nzeta+NGHOST);
-      zeta_f_full.NewAthenaArray(nzeta+1+NGHOST);
-      dzeta_v.NewAthenaArray(nzeta+NGHOST);
-      dzeta_f.NewAthenaArray(nzeta+1+NGHOST);
+      zeta_v_full.NewAthenaArray(nzeta+2*NGHOST);
+      zeta_f_full.NewAthenaArray(nzeta+1+2*NGHOST);
+      dzeta_v.NewAthenaArray(nzeta+2*NGHOST);
+      dzeta_f.NewAthenaArray(nzeta+1+2*NGHOST);
       coszeta_f.NewAthenaArray(nzeta+1);
       len_zeta.NewAthenaArray(nzeta); // This is \Delta(cos\theta)
 
@@ -371,7 +371,7 @@ void NRRadiation::AngularGrid(int angle_flag, int nzeta, int npsi) {
         zeta_v_full(nzeta+NGHOST+i-1) = zeta_v_full(nzeta+NGHOST+i-2) + delta;
       }
 
-      for (int i=0; i<nzeta+NGHOST-1; ++i) {
+      for (int i=0; i<nzeta+2*NGHOST-1; ++i) {
         dzeta_v(i) = zeta_v_full(i+1) - zeta_v_full(i);
       }
       for (int i=0; i<nzeta+1; ++i) {
@@ -388,7 +388,7 @@ void NRRadiation::AngularGrid(int angle_flag, int nzeta, int npsi) {
         zeta_f_full(nzeta+NGHOST+i) = zeta_f_full(nzeta+NGHOST+i-1) + delta;
       }
 
-      for (int i=0; i<nzeta+NGHOST; ++i) {
+      for (int i=0; i<nzeta+2*NGHOST; ++i) {
         dzeta_f(i) = zeta_f_full(i+1)-zeta_f_full(i);
       }
 
