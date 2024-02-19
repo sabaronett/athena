@@ -142,35 +142,66 @@ NRRadiation::NRRadiation(MeshBlock *pmb, ParameterInput *pin):
 
   int n_ang=0; // number of angles per octant and number of octant
   // total calculate total number of angles based on dimensions
+  // nzeta defined from 0 to pi
   if (angle_flag == 1) {
-    if (ndim == 1) {
-      noct = 2;
-      n_ang = nzeta;
-      if (npsi > 0) {
-        std::stringstream msg;
-        msg << "### FATAL ERROR in radiation class" << std::endl
-            << "1D problem cannot have npsi > 0"   << std::endl;
-        ATHENA_ERROR(msg);
-      }
-    } else if (ndim == 2) {
-      if (npsi <= 1) {
+    if (nzeta % 2 != 0) { // odd number of angles uses quadrants (noct/2)
+      if (ndim == 1) {
+        noct = 1;
         n_ang = nzeta;
-      } else if (nzeta == 0) {
-        n_ang = npsi/2;
-      } else {
-        n_ang = nzeta*npsi;
-      }
-      if (std::strcmp(COORDINATE_SYSTEM, "spherical_polar") == 0) {
-        noct = 8;
+        if (npsi > 0) {
+          std::stringstream msg;
+          msg << "### FATAL ERROR in radiation class" << std::endl
+              << "1D problem cannot have npsi > 0"   << std::endl;
+          ATHENA_ERROR(msg);
+        }
+      } else if (ndim == 2) {
+        if (npsi <= 1) {
+          n_ang = nzeta;
+        } else if (nzeta == 0) {
+          n_ang = npsi/2;
+        } else {
+          n_ang = nzeta*npsi;
+        }
+        if (std::strcmp(COORDINATE_SYSTEM, "spherical_polar") == 0) {
+          noct = 4;
+          n_ang = nzeta*npsi/2;
+        } else { // Cartesian
+          noct = 2; 
+        }
+      } else if (ndim == 3) {
         n_ang = nzeta*npsi/2;
-      } else {
         noct = 4;
       }
-    } else if (ndim == 3) {
-      n_ang = nzeta*npsi/2;
-      noct = 8;
+    } else { // even number of angles keeps octants
+      if (ndim == 1) {
+        noct = 2;
+        n_ang = nzeta/2;
+        if (npsi > 0) {
+          std::stringstream msg;
+          msg << "### FATAL ERROR in radiation class" << std::endl
+              << "1D problem cannot have npsi > 0"   << std::endl;
+          ATHENA_ERROR(msg);
+        }
+      } else if (ndim == 2) {
+        if (npsi <= 1) {
+          n_ang = nzeta/2;
+        } else if (nzeta == 0) {
+          n_ang = npsi/2;
+        } else {
+          n_ang = nzeta/2*npsi;   
+        }
+        if (std::strcmp(COORDINATE_SYSTEM, "spherical_polar") == 0) {
+          noct = 8;
+          n_ang = nzeta/2*npsi/2;
+        } else { // Cartesian
+          noct = 4; 
+        }
+      } else if (ndim == 3) {
+        n_ang = nzeta/2*npsi/2;
+        noct = 8;
+      }
     }
-  } else {
+  } else { // end if (ang_flag == 1)
     if (ndim == 1) {
       n_ang = nmu;
       noct = 2;
@@ -190,7 +221,6 @@ NRRadiation::NRRadiation(MeshBlock *pmb, ParameterInput *pin):
       }
     }
   }
-
   nang = n_ang * noct;
 
 
