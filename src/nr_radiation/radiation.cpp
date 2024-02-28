@@ -170,7 +170,8 @@ NRRadiation::NRRadiation(MeshBlock *pmb, ParameterInput *pin):
       n_ang = nzeta*npsi/2;
       noct = 8;
     }
-    nang = nzeta*2*npsi;
+    n_ang = nzeta*2*npsi;
+    nang = n_ang;
   } else {
     if (ndim == 1) {
       n_ang = nmu;
