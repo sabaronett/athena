@@ -170,6 +170,7 @@ NRRadiation::NRRadiation(MeshBlock *pmb, ParameterInput *pin):
       n_ang = nzeta*npsi/2;
       noct = 8;
     }
+    nang = nzeta*2*npsi;
   } else {
     if (ndim == 1) {
       n_ang = nmu;
@@ -189,9 +190,10 @@ NRRadiation::NRRadiation(MeshBlock *pmb, ParameterInput *pin):
         n_ang = nmu * nmu/2;
       }
     }
+    nang = n_ang * noct;
   }
 
-  nang = n_ang * noct;
+  // nang = n_ang * noct;
 
 
   // frequency grid
