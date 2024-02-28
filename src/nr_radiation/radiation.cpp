@@ -142,66 +142,35 @@ NRRadiation::NRRadiation(MeshBlock *pmb, ParameterInput *pin):
 
   int n_ang=0; // number of angles per octant and number of octant
   // total calculate total number of angles based on dimensions
-  // nzeta defined from 0 to pi
   if (angle_flag == 1) {
-    if (nzeta % 2 != 0) { // odd number of angles uses quadrants (noct/2)
-      if (ndim == 1) {
-        noct = 1;
+    if (ndim == 1) {
+      noct = 2;
+      n_ang = nzeta;
+      if (npsi > 0) {
+        std::stringstream msg;
+        msg << "### FATAL ERROR in radiation class" << std::endl
+            << "1D problem cannot have npsi > 0"   << std::endl;
+        ATHENA_ERROR(msg);
+      }
+    } else if (ndim == 2) {
+      if (npsi <= 1) {
         n_ang = nzeta;
-        if (npsi > 0) {
-          std::stringstream msg;
-          msg << "### FATAL ERROR in radiation class" << std::endl
-              << "1D problem cannot have npsi > 0"   << std::endl;
-          ATHENA_ERROR(msg);
-        }
-      } else if (ndim == 2) {
-        if (npsi <= 1) {
-          n_ang = nzeta;
-        } else if (nzeta == 0) {
-          n_ang = npsi/2;
-        } else {
-          n_ang = nzeta*npsi;
-        }
-        if (std::strcmp(COORDINATE_SYSTEM, "spherical_polar") == 0) {
-          noct = 4;
-          n_ang = nzeta*npsi/2;
-        } else { // Cartesian
-          noct = 2; 
-        }
-      } else if (ndim == 3) {
+      } else if (nzeta == 0) {
+        n_ang = npsi/2;
+      } else {
+        n_ang = nzeta*npsi;
+      }
+      if (std::strcmp(COORDINATE_SYSTEM, "spherical_polar") == 0) {
+        noct = 8;
         n_ang = nzeta*npsi/2;
+      } else {
         noct = 4;
       }
-    } else { // even number of angles keeps octants
-      if (ndim == 1) {
-        noct = 2;
-        n_ang = nzeta/2;
-        if (npsi > 0) {
-          std::stringstream msg;
-          msg << "### FATAL ERROR in radiation class" << std::endl
-              << "1D problem cannot have npsi > 0"   << std::endl;
-          ATHENA_ERROR(msg);
-        }
-      } else if (ndim == 2) {
-        if (npsi <= 1) {
-          n_ang = nzeta/2;
-        } else if (nzeta == 0) {
-          n_ang = npsi/2;
-        } else {
-          n_ang = nzeta/2*npsi;   
-        }
-        if (std::strcmp(COORDINATE_SYSTEM, "spherical_polar") == 0) {
-          noct = 8;
-          n_ang = nzeta/2*npsi/2;
-        } else { // Cartesian
-          noct = 4; 
-        }
-      } else if (ndim == 3) {
-        n_ang = nzeta/2*npsi/2;
-        noct = 8;
-      }
+    } else if (ndim == 3) {
+      n_ang = nzeta*npsi/2;
+      noct = 8;
     }
-  } else { // end if (ang_flag == 1)
+  } else {
     if (ndim == 1) {
       n_ang = nmu;
       noct = 2;
@@ -221,8 +190,8 @@ NRRadiation::NRRadiation(MeshBlock *pmb, ParameterInput *pin):
       }
     }
   }
-  nang = n_ang * noct;
 
+  nang = n_ang * noct;
 
   // frequency grid
   //frequency grid covers -infty to infty, default nfreq=1, means gray
@@ -249,10 +218,8 @@ NRRadiation::NRRadiation(MeshBlock *pmb, ParameterInput *pin):
   // setup the frequency grid
   FrequencyGrid();
 
-
   UserFrequency = DefaultFrequency;
   UserEmissionSpec = DefaultEmission;
-
 
   n_fre_ang = nang * nfreq;
   //co-moving frame frequency grid depends on angels
@@ -267,7 +234,6 @@ NRRadiation::NRRadiation(MeshBlock *pmb, ParameterInput *pin):
     // future extension may add "int nregister" to Hydro class
     ir2.NewAthenaArray(nc3, nc2, nc1, n_fre_ang);
   }
-
 
   ir_old.NewAthenaArray(nc3,nc2,nc1,n_fre_ang);
 
@@ -304,12 +270,8 @@ NRRadiation::NRRadiation(MeshBlock *pmb, ParameterInput *pin):
 
   output_sigma.NewAthenaArray(3*nfreq,nc3,nc2,nc1);
 
-
   mu.NewAthenaArray(3,nc3,nc2,nc1,nang);
   wmu.NewAthenaArray(nang);
-
-
-
 
   if (angle_flag == 1) {
     AngularGrid(angle_flag, nzeta, npsi);
@@ -325,7 +287,6 @@ NRRadiation::NRRadiation(MeshBlock *pmb, ParameterInput *pin):
   // set a default opacity function
   UpdateOpacity = DefaultOpacity;
 
-
   pradintegrator = new RadIntegrator(this, pin);
 
   rad_bvar.bvar_index = pmb->pbval->bvars.size();
@@ -335,16 +296,11 @@ NRRadiation::NRRadiation(MeshBlock *pmb, ParameterInput *pin):
     pmb->pbval->bvars_main_int.push_back(&rad_bvar);
   }
 
-
-  //------------------------------------------
+  //-----------------------------------------
   // temporary arrays for multi-group moments
   cosx_cm_.NewAthenaArray(nang);
   cosy_cm_.NewAthenaArray(nang);
   cosz_cm_.NewAthenaArray(nang);
-
-
-
-
   //------------------------------------------
 
   // set the default t_floor and t_ceiling
@@ -405,35 +361,7 @@ NRRadiation::NRRadiation(MeshBlock *pmb, ParameterInput *pin):
   }
 }
 
-// destructor
-// destructor not used
 NRRadiation::~NRRadiation() {
-  ir_old.DeleteAthenaArray();
-  rad_mom.DeleteAthenaArray();
-  rad_mom_cm.DeleteAthenaArray();
-
-  if (restart_from_gray) {
-    ir_gray.DeleteAthenaArray();
-  }
-
-  sigma_s.DeleteAthenaArray();
-  sigma_a.DeleteAthenaArray();
-  sigma_p.DeleteAthenaArray();
-  sigma_pe.DeleteAthenaArray();
-  t_floor_.DeleteAthenaArray();
-  t_ceiling_.DeleteAthenaArray();
-  output_sigma.DeleteAthenaArray();
-
-  mu.DeleteAthenaArray();
-  wmu.DeleteAthenaArray();
-  cosx_cm_.DeleteAthenaArray();
-  cosy_cm_.DeleteAthenaArray();
-  cosz_cm_.DeleteAthenaArray();
-
-  if (nfreq  > 1) {
-    rad_mom_nu.DeleteAthenaArray();
-    rad_mom_cm_nu.DeleteAthenaArray();
-  }
   delete pradintegrator;
 }
 
