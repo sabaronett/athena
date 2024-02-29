@@ -719,7 +719,7 @@ void SphericalPolar::GetGeometryZeta(NRRadiation *prad, const int k, const int j
                                      const int i, AthenaArray<Real> &g_zeta) {
   int &nzeta = prad->nzeta;
   Real radius = x1v(i);
-  for(int n=0; n<nzeta*2+1; ++n) {
+  for(int n=0; n<nzeta+1; ++n) {
     g_zeta(n) = 1./radius;
   }
 }

@@ -113,7 +113,7 @@ void RadIntegrator::ImplicitPsiFluxCoef(int k, int j, int i, int n_zeta, Real wg
   // g_psi_(0) is always 0
 
   for (int m=0; m<2*npsi; ++m) { // all take the left state
-    int ang_num = n_zeta*2*npsi+m;
+    int ang_num = n_zeta*npsi+m;
 
     Real coef0 = wght * g_psi_(m) * prad->reduced_c *
             area_psi(n_zeta,m)/ang_vol(ang_num);
@@ -131,7 +131,7 @@ void RadIntegrator::ImplicitPsiFluxCoef(int k, int j, int i, int n_zeta, Real wg
       imp_ang_psi_r_(k,j,i,ang_num) = coef1;
       coef_c = coef0;
     }
-    if (n_zeta == 2*prad->nzeta-1) {
+    if (n_zeta == prad->nzeta-1) {
       imp_ang_coef_r_(k,j,i,ang_num) = 0.0;
       imp_ang_coef_(k,j,i,ang_num) = coef_c + z_coef + z_coef1;
     } else {
@@ -178,7 +178,7 @@ void RadIntegrator::ImplicitPsiFlux(const int k, const int j, const int i,
   NRRadiation *prad=pmy_rad;
   int &npsi = prad->npsi;
   // m=0
-  int ang_num = n_zeta*2*npsi;
+  int ang_num = n_zeta*npsi;
   int &nang = prad->nang;
 
   Real *psi_l = &(imp_ang_psi_l_(k,j,i,ang_num));
@@ -186,7 +186,7 @@ void RadIntegrator::ImplicitPsiFlux(const int k, const int j, const int i,
   Real *p_ir = &(ir_ini(k,j,i,ifr*nang+ang_num));
   Real *p_angflx = &(ang_flx_(k,j,i,ifr*nang+ang_num));
 
-  if (n_zeta == 2*prad->nzeta-1) {
+  if (n_zeta == prad->nzeta-1) {
     // m=0
     p_angflx[0] = -(psi_l[0] * p_ir[2*npsi-1] + psi_r[0] * p_ir[1]);
     for (int m=1; m<2*npsi-1; ++m) { // all take the left state
