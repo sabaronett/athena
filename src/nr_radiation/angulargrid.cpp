@@ -518,9 +518,12 @@ void NRRadiation::AngularGrid(int angle_flag, int nzeta, int npsi) {
           } else {// the case in x -y plane
             if (std::strcmp(COORDINATE_SYSTEM, "spherical_polar") == 0) {
               // in spherical polar, 2D, we still need 3D angular grid
+              mu(axisx,0,j,i,0) = 0; // N-pole
+              mu(axisy,0,j,i,0) = 0;
+              mu(axisz,0,j,i,0) = 1;
               for (int n=0; n<2*nzeta; ++n) {
                 for (int m=0; m<2*npsi; ++m) {
-                  int ang_num = n*(2*npsi)+m;
+                  int ang_num = n*(2*npsi)+m + 1; // skip N-pole
                   Real sinzeta_v = std::sqrt(1.0 - coszeta_v(n)
                                       * coszeta_v(n));
                   mu(axisx,0,j,i,ang_num) = sinzeta_v * cos(psi_v(m));
@@ -528,6 +531,9 @@ void NRRadiation::AngularGrid(int angle_flag, int nzeta, int npsi) {
                   mu(axisz,0,j,i,ang_num) = coszeta_v(n);
                 }
               }
+              mu(axisx,0,j,i,nang-1) = 0; // S-pole
+              mu(axisy,0,j,i,nang-1) = 0;
+              mu(axisz,0,j,i,nang-1) = -1;
             } else {
               for (int m=0; m<2*npsi; ++m) {
                 mu(0,0,j,i,m) = cos(psi_v(m));

@@ -191,7 +191,7 @@ NRRadiation::NRRadiation(MeshBlock *pmb, ParameterInput *pin):
     }
   }
 
-  nang = n_ang * noct;
+  nang = n_ang * noct + 2; // add polar rays
 
 
   // frequency grid
