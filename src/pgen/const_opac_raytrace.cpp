@@ -372,7 +372,7 @@ void RadInnerX1(MeshBlock *pmb, Coordinates *pco, NRRadiation *prad,
     }
   }
   // diagnostics
-  std::cout << "nact = " << nact << "; mu_xmax = " << mu_xmax << std::endl;
+  // std::cout << "nact = " << nact << "; mu_xmax = " << mu_xmax << std::endl;
 }
 
 //----------------------------------------------------------------------------------------
