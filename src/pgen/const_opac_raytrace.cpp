@@ -346,33 +346,18 @@ void RadInnerX1(MeshBlock *pmb, Coordinates *pco, NRRadiation *prad,
                 const AthenaArray<Real> &w, FaceField &b, AthenaArray<Real> &ir,
                 Real time, Real dt,
                 int is, int ie, int js, int je, int ks, int ke, int ngh) {
-  int nact = 0;                            // active angles
-  Real mu_xmax = 0;                        // max(\mu_x)
   Real F = std::pow(T, 4)*std::pow(R/x1min, 2)/4; // can get x1min from pmb->pmy_mesh
 
   for (int k=ks; k<=ke; ++k) {
     for (int j=js; j<=je; ++j) {
       for (int i=1; i<=ngh; ++i) {
-        nact = 0;                          // reset for new ghost zone
-        mu_xmax = 0;
-
-        for (int n=0; n<prad->nang; ++n) { // find most radial angle
-          if (prad->mu(0,k,j,is-i,n) > mu_xmax) mu_xmax = prad->mu(0,k,j,is-i,n);
-        }
-        for (int n=0; n<prad->nang; ++n) { // count most radial angles
-          if (prad->mu(0,k,j,is-i,n) == mu_xmax) ++nact;
-        }
-        for (int n=0; n<prad->nang; ++n) { // activate most radial angles
-          if (prad->mu(0,k,j,is-i,n) == mu_xmax)
-            ir(k,j,is-i,n) = F/(prad->wmu(n)*mu_xmax*nact);
-          else
-            ir(k,j,is-i,n) = 0.0;
+        ir(k,j,is-i,0) = F/prad->wmu(n);     // enable radial angle
+        for (int n=1; n<prad->nang; ++n) { 
+          ir(k,j,is-i,n) = 0.0; // disable all other angles
         }
       }
     }
   }
-  // diagnostics
-  // std::cout << "nact = " << nact << "; mu_xmax = " << mu_xmax << std::endl;
 }
 
 //----------------------------------------------------------------------------------------
