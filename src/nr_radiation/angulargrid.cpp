@@ -336,28 +336,19 @@ void NRRadiation::AngularGrid(int angle_flag, int nzeta, int npsi) {
 
       int zs = 0; // ze = 2*nzeta - 1;
       Real sum = 0.0;
-      Real dcoszeta = 2*npsi/(npsi*nzeta + 1);
+      Real dcoszeta = npsi/(npsi*nzeta + 1);
       coszeta_f(zs) = npsi*nzeta/(npsi*nzeta + 1);
-      for (int i=1; i<nzeta; ++i) {
-        coszeta_f(i+zs) = coszeta_f(zs) - i *dcoszeta;
-        sum += std::pow(coszeta_f(i+zs), 2);
-      }
-      coszeta_f(nzeta+zs) = 0.0;
-      for (int i=nzeta+1; i<2*nzeta+1; ++i)
-        coszeta_f(i+zs) = -coszeta_f(2*nzeta-i+zs);
-
-      for (int i=0; i<nzeta; ++i) {
+      for (int i=0; i<2*nzeta; ++i) {
+        coszeta_f(i+zs+1) = coszeta_f(zs) - (i+1)*dcoszeta;
         coszeta_v(i+zs) = 0.5*(coszeta_f(i+zs)+coszeta_f(i+zs+1));
+        sum += std::pow(coszeta_v(i+zs), 2);
       }
-    // re-normalize
+      // re-normalize
       sum *= 2*npsi;
       Real normalization = std::sqrt((nang/3 - 2)/sum);
 
-      for (int i=0; i<nzeta; ++i) {
+      for (int i=0; i<2*nzeta; ++i) {
         coszeta_v(i+zs) *= normalization;
-      }
-      for (int i=nzeta; i<2*nzeta; ++i) {
-        coszeta_v(i+zs) = -coszeta_v(2*nzeta-i-1+zs);
       }
 
       for (int i=0; i<nzeta*2; ++i) {
