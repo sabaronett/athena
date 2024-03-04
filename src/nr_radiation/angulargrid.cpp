@@ -337,7 +337,9 @@ void NRRadiation::AngularGrid(int angle_flag, int nzeta, int npsi) {
       int zs = 0; // ze = 2*nzeta - 1;
       Real sum = 0.0;
       Real dcoszeta = npsi/(npsi*nzeta + 1);
+      std::cout << "dcoszeta = " << dcoszeta << std::endl;
       coszeta_f(zs) = npsi*nzeta/(npsi*nzeta + 1);
+      std::cout << "npsi*nzeta/(npsi*nzeta + 1) = " << npsi*nzeta/(npsi*nzeta + 1) << std::endl;
       std::cout << "coszeta_f(" << zs << ") = " << coszeta_f(zs) << std::endl;
       for (int i=0; i<2*nzeta; ++i) {
         coszeta_f(i+zs+1) = coszeta_f(zs) - (i+1)*dcoszeta;
