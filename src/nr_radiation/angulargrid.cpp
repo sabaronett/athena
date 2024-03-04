@@ -341,15 +341,16 @@ void NRRadiation::AngularGrid(int angle_flag, int nzeta, int npsi) {
       for (int i=0; i<2*nzeta; ++i) {
         coszeta_f(i+zs+1) = coszeta_f(zs) - (i+1)*dcoszeta;
         coszeta_v(i+zs) = 0.5*(coszeta_f(i+zs)+coszeta_f(i+zs+1));
+
         sum += std::pow(coszeta_v(i+zs), 2);
       }
       // re-normalize
-      sum *= 2*npsi;
-      Real normalization = std::sqrt((nang/3 - 2)/sum);
+      // sum *= 2*npsi;
+      // Real normalization = std::sqrt((nang/3 - 2)/sum);
 
-      for (int i=0; i<2*nzeta; ++i) {
-        coszeta_v(i+zs) *= normalization;
-      }
+      // for (int i=0; i<2*nzeta; ++i) {
+      //   coszeta_v(i+zs) *= normalization;
+      // }
 
       for (int i=0; i<nzeta*2; ++i) {
         len_zeta(i) = coszeta_f(i) - coszeta_f(i+1);
