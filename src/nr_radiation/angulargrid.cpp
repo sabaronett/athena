@@ -335,27 +335,28 @@ void NRRadiation::AngularGrid(int angle_flag, int nzeta, int npsi) {
       len_zeta.NewAthenaArray(2*nzeta); // This id Delta (cos\theta)
 
       int zs = 0; // ze = 2*nzeta - 1;
-      Real sum = 0.0;
-      std::cout << "nzeta = " << nzeta << ", npsi = " << npsi << std::endl;
-      Real dcoszeta = npsi/(npsi*nzeta + 1);
-      std::cout << "dcoszeta = " << dcoszeta << std::endl;
-      coszeta_f(zs) = npsi*nzeta/(npsi*nzeta + 1);
-      std::cout << "npsi*nzeta/(npsi*nzeta + 1) = " << npsi*nzeta/(npsi*nzeta + 1) << std::endl;
-      std::cout << "coszeta_f(" << zs << ") = " << coszeta_f(zs) << std::endl;
-      for (int i=0; i<2*nzeta; ++i) {
-        coszeta_f(i+zs+1) = coszeta_f(zs) - (i+1)*dcoszeta;
-        std::cout << "coszeta_f(" << i+zs+1 << ") = " << coszeta_f(i+zs+1) << std::endl;
-        coszeta_v(i+zs) = 0.5*(coszeta_f(i+zs)+coszeta_f(i+zs+1));
-        std::cout << "coszeta_v(" << i+zs << ") = " << coszeta_v(i+zs) << std::endl;
-        sum += std::pow(coszeta_v(i+zs), 2);
-      }
-      // re-normalize
-      // sum *= 2*npsi;
-      // Real normalization = std::sqrt((nang/3 - 2)/sum);
 
-      // for (int i=0; i<2*nzeta; ++i) {
-      //   coszeta_v(i+zs) *= normalization;
-      // }
+      Real dcoszeta = 1.0/nzeta;
+      coszeta_f(zs) = 1.0;
+      for (int i=1; i<nzeta; ++i) {
+        coszeta_f(i+zs) = 1.0 - i *dcoszeta;
+      }
+      coszeta_f(nzeta+zs) = 0.0;
+      for (int i=nzeta+1; i<2*nzeta+1; ++i)
+        coszeta_f(i+zs) = -coszeta_f(2*nzeta-i+zs);
+
+      for (int i=0; i<nzeta; ++i) {
+        coszeta_v(i+zs) = 0.5*(coszeta_f(i+zs)+coszeta_f(i+zs+1));
+      }
+    // re-normalize
+      Real normalization = 2*nzeta/std::sqrt(4*nzeta*nzeta-1);
+
+      for (int i=0; i<nzeta; ++i) {
+        coszeta_v(i+zs) *= normalization;
+      }
+      for (int i=nzeta; i<2*nzeta; ++i) {
+        coszeta_v(i+zs) = -coszeta_v(2*nzeta-i-1+zs);
+      }
 
       for (int i=0; i<nzeta*2; ++i) {
         len_zeta(i) = coszeta_f(i) - coszeta_f(i+1);
@@ -517,12 +518,9 @@ void NRRadiation::AngularGrid(int angle_flag, int nzeta, int npsi) {
           } else {// the case in x -y plane
             if (std::strcmp(COORDINATE_SYSTEM, "spherical_polar") == 0) {
               // in spherical polar, 2D, we still need 3D angular grid
-              mu(axisx,0,j,i,0) = 0; // N-pole
-              mu(axisy,0,j,i,0) = 0;
-              mu(axisz,0,j,i,0) = 1;
               for (int n=0; n<2*nzeta; ++n) {
                 for (int m=0; m<2*npsi; ++m) {
-                  int ang_num = n*(2*npsi)+m + 1; // skip N-pole
+                  int ang_num = n*(2*npsi)+m;
                   Real sinzeta_v = std::sqrt(1.0 - coszeta_v(n)
                                       * coszeta_v(n));
                   mu(axisx,0,j,i,ang_num) = sinzeta_v * cos(psi_v(m));
@@ -530,9 +528,12 @@ void NRRadiation::AngularGrid(int angle_flag, int nzeta, int npsi) {
                   mu(axisz,0,j,i,ang_num) = coszeta_v(n);
                 }
               }
-              mu(axisx,0,j,i,nang-1) = 0; // S-pole
+              mu(axisx,0,j,i,nang-2) = 0; // S-pole
+              mu(axisy,0,j,i,nang-2) = 0;
+              mu(axisz,0,j,i,nang-2) = -1;
+              mu(axisx,0,j,i,nang-1) = 0; // N-pole
               mu(axisy,0,j,i,nang-1) = 0;
-              mu(axisz,0,j,i,nang-1) = -1;
+              mu(axisz,0,j,i,nang-1) = 1;
             } else {
               for (int m=0; m<2*npsi; ++m) {
                 mu(0,0,j,i,m) = cos(psi_v(m));
