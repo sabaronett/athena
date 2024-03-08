@@ -309,6 +309,7 @@ void GetCylCoord(Coordinates *pco,Real &rad,Real &phi,Real &z,int i,int j,int k)
 Real DenProfileCyl(const Real rad, const Real phi, const Real z) {
   Real den;
   Real p_over_r = p0_over_r0;
+  Real EULER = 2.7182818284590452;
 
   if (NON_BAROTROPIC_EOS) p_over_r = PoverR(rad, phi, z);
   Real denmid = rho0*std::pow((rad + r0)/r0, dslope)\
