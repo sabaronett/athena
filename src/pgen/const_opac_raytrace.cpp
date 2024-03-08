@@ -351,10 +351,11 @@ void RadInnerX1(MeshBlock *pmb, Coordinates *pco, NRRadiation *prad,
   for (int k=ks; k<=ke; ++k) {
     for (int j=js; j<=je; ++j) {
       for (int i=1; i<=ngh; ++i) {
-        ir(k,j,is-i,0) = F/prad->wmu(0);     // enable radial angle
-        for (int n=1; n<prad->nang; ++n) { 
-          ir(k,j,is-i,n) = 0.0; // disable all other angles
+        for (int n=0; n<prad->nang-2; ++n) { 
+          ir(k,j,is-i,n) = 0.0;
         }
+        ir(k,j,is-i,prad->nang-2) = F/prad->wmu(0); // enable outward radial angle
+        ir(k,j,is-i,prad->nang-1) = 0.0;            // disable antiparallel angle
       }
     }
   }
