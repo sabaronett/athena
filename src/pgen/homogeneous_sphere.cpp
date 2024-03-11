@@ -191,8 +191,8 @@ void RadConstantFluxInnerX1(
             //  std::cout << prad->ir(k,j,is-i,ifr*prad->nang+n) << " " << n << " " << i << std::endl;
             //}
           }
-          prad->ir(k,j,is-i,ifr*prad->nang-2) = 0.0;
-          prad->ir(k,j,is-i,ifr*prad->nang-1) = 1.0;
+          prad->ir(k,j,is-i,ifr*prad->nang-2) = -1.0;
+          prad->ir(k,j,is-i,ifr*prad->nang-1) = 0.0;
 
         }
       }
