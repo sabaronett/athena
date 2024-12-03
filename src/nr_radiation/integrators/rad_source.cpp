@@ -531,9 +531,9 @@ void RadIntegrator::AddSourceTerms(MeshBlock *pmb, AthenaArray<Real> &u) {
   for (int k=ks; k<=ke; ++k) {
     for (int j=js; j<=je; ++j) {
       for (int i=is; i<=ie; ++i) {
-        u(IM1,k,j,i) += rad_source(1,k,j,i);
-        u(IM2,k,j,i) += rad_source(2,k,j,i);
-        u(IM3,k,j,i) += rad_source(3,k,j,i);
+        // u(IM1,k,j,i) += rad_source(1,k,j,i);
+        // u(IM2,k,j,i) += rad_source(2,k,j,i);
+        // u(IM3,k,j,i) += rad_source(3,k,j,i);
 
         //limit the velocity by speed of light
         Real vx = u(IM1,k,j,i)/u(IDN,k,j,i);
